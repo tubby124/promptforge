@@ -1,0 +1,630 @@
+{
+  "version": "1.2.0-bundled",
+  "updated": "2026-06-05",
+  "site_adapters": {
+    "chatgpt.com": {
+      "textareaSelectors": ["#prompt-textarea"],
+      "editableSelectors": ["#prompt-textarea[contenteditable]", "div[contenteditable='true'][data-id='prompt-textarea']"]
+    },
+    "chat.openai.com": {
+      "textareaSelectors": ["#prompt-textarea", "textarea[data-id='root']"],
+      "editableSelectors": ["#prompt-textarea[contenteditable]"]
+    },
+    "claude.ai": {
+      "editableSelectors": [
+        "div[contenteditable='true'][role='textbox']",
+        "div.ProseMirror",
+        "fieldset div[contenteditable='true']"
+      ]
+    },
+    "gemini.google.com": {
+      "editableSelectors": [
+        "rich-textarea div[contenteditable='true']",
+        "div.ql-editor[contenteditable='true']",
+        "div[contenteditable='true']"
+      ]
+    },
+    "www.perplexity.ai": {
+      "textareaSelectors": ["textarea[placeholder*='Ask']", "textarea[placeholder*='ask']", "textarea"],
+      "editableSelectors": ["div[contenteditable='true']"]
+    },
+    "perplexity.ai": {
+      "textareaSelectors": ["textarea[placeholder*='Ask']", "textarea"],
+      "editableSelectors": ["div[contenteditable='true']"]
+    },
+    "grok.com": {
+      "editableSelectors": ["div[contenteditable='true']"],
+      "textareaSelectors": ["textarea"]
+    },
+    "x.com": {
+      "editableSelectors": ["div[contenteditable='true'][data-testid='tweetTextarea_0']", "div[contenteditable='true']"]
+    }
+  },
+  "model_pricing": {
+    "anthropic/claude-haiku-4-5": { "in": 1.0, "out": 5.0 },
+    "anthropic/claude-sonnet-4-6": { "in": 3.0, "out": 15.0 }
+  },
+  "universal_techniques": [
+    "Role assignment with specific expertise + years of experience + named constraint",
+    "Context layering: background -> task -> constraints -> output spec",
+    "Explicit output specification (format, length, structure)",
+    "Chain-of-thought scaffolding for multi-step reasoning",
+    "Few-shot examples when format is non-obvious",
+    "Constraint enumeration (must include / must avoid lists)",
+    "Audience anchoring (named segment with stated pain)",
+    "Anti-pattern declaration (banned phrases, cliches, hedges)",
+    "Reasoning-before-answering instruction for non-trivial tasks",
+    "Verification step: 'before finalizing, check that X, Y, Z'"
+  ],
+  "email_patterns": [
+    "Subject line on line 1, blank line, then body",
+    "Open with one specific reference to recipient context — no generic 'I hope this finds you well'",
+    "One ask per email, made unmissable",
+    "Match recipient's communication register (formal vs casual)",
+    "Sign-off matches user profile signature exactly",
+    "Body under 150 words unless context demands more",
+    "End with a concrete next step + deadline",
+    "Never apologize for emailing or use 'just checking in'"
+  ],
+  "code_patterns": [
+    "State stack/language/version explicitly (e.g. 'TypeScript 5.4, Next.js 15, React 19')",
+    "Describe the existing code surface before requesting changes",
+    "Constraint list: perf budget, dependencies allowed, security must-haves",
+    "Demand a 'think through approach before coding' step for non-trivial tasks",
+    "Specify expected interface: function signature, types, return shape",
+    "Include input/output examples for ambiguous cases",
+    "State the deliverable: 'I want a working file at path X that does Y'",
+    "For bug fixes: include the actual error message + reproduction steps",
+    "For refactors: state what should and should not change behaviorally"
+  ],
+  "marketing_patterns": [
+    "Audience: narrow segment with named pain (not 'everyone' or 'small businesses')",
+    "Channel-aware framing (LinkedIn ≠ Instagram ≠ Email ≠ Google Ads)",
+    "Hook + payoff + proof + CTA structure",
+    "Word count or character limit stated explicitly per channel",
+    "Reference brand voice profile",
+    "Banned-words list (corporate jargon, hype, hedges)",
+    "Proof element required: stat, testimonial, screenshot, named customer, before/after",
+    "Single clear CTA, never two competing ones"
+  ],
+  "research_patterns": [
+    "Scope: what's in, what's out",
+    "Time horizon for sources (e.g. 'prefer sources from last 12 months')",
+    "Preferred sources (primary research, official docs, peer-reviewed)",
+    "Banned sources (Wikipedia summaries, AI-generated content farms, undated blog posts)",
+    "Citation format: inline [1] [2] style with URLs in a references section",
+    "Confidence calibration: rate each claim's confidence",
+    "Disagreement handling: when sources conflict, show both views",
+    "Output structure: TL;DR -> key findings -> deep dive -> sources"
+  ],
+  "image_styles": {
+    "photoreal-portrait": {
+      "composition": "rule-of-thirds, eye-level, headshot to mid-shot framing, subject sharp, background falloff",
+      "camera": "85mm prime at f/1.8, full-frame, slight chromatic aberration",
+      "lighting": "soft window key from left, gentle fill from right, catchlight in eyes, no harsh shadows",
+      "color": "neutral grade, accurate skin tones, slight warmth in highlights",
+      "mood": "intimate, present, considered",
+      "style": "modern editorial portraiture, Annie Leibovitz influence",
+      "quality": "8k, ultra-detailed, sharp focus on eyes, preserved skin texture, professional retoucher quality"
+    },
+    "photoreal-landscape": {
+      "composition": "leading lines, foreground anchor, mid-ground subject, atmospheric depth",
+      "camera": "16-35mm wide at f/11, full-frame, polarizer for sky saturation",
+      "lighting": "golden hour, low sun, long shadows, rim light on foreground",
+      "color": "warm golds, cool shadow tones, naturalistic saturation",
+      "mood": "epic, contemplative",
+      "style": "modern landscape photography, Marc Adamus influence",
+      "quality": "8k, ultra-sharp throughout, no digital crunch, natural color science"
+    },
+    "studio-portrait": {
+      "composition": "centered, three-quarter pose, classic headshot framing",
+      "camera": "85mm at f/4, full-frame digital",
+      "lighting": "softbox key 45 degrees high, fill light from opposite side, rim light from behind, white seamless background",
+      "color": "clean, neutral, true-to-life",
+      "mood": "professional, confident",
+      "style": "commercial corporate portrait",
+      "quality": "8k, retoucher-grade, no skin smoothing, real texture"
+    },
+    "product-shot-white": {
+      "composition": "centered hero product on white seamless, slight angle to show dimension",
+      "camera": "100mm macro at f/8, focus stacked",
+      "lighting": "two large softboxes evenly lit, no harsh shadows, subtle reflection on surface",
+      "color": "true-color, no tint",
+      "mood": "clean, premium",
+      "style": "Amazon hero / Apple product photography",
+      "quality": "8k, ultra-sharp, gallery quality, no compression artifacts"
+    },
+    "product-shot-lifestyle": {
+      "composition": "product in use, environmental context, rule-of-thirds, human element if relevant",
+      "camera": "35-50mm at f/2.8, hint of context blur",
+      "lighting": "natural window light or golden hour, soft falloff",
+      "color": "warm, inviting, slightly desaturated",
+      "mood": "aspirational, relatable",
+      "style": "modern lifestyle commercial",
+      "quality": "8k, magazine-spread quality"
+    },
+    "cinematic-anamorphic": {
+      "composition": "2.39:1 aspect, off-center subject, negative space, layered depth",
+      "camera": "anamorphic 40mm at f/2, slight lens flare, oval bokeh",
+      "lighting": "motivated practical lighting, deep shadows, single key source",
+      "color": "teal-and-orange grade, crushed blacks, warm highlights",
+      "mood": "atmospheric, weighty",
+      "style": "Roger Deakins / Hoyte van Hoytema influence",
+      "quality": "film-grade, 35mm grain texture, cinematic color science"
+    },
+    "cinematic-noir": {
+      "composition": "low angle, harsh diagonals, venetian blind shadows, smoke in frame",
+      "camera": "40mm at f/2.8, slight push-in feel",
+      "lighting": "single hard key from window, deep falloff, rim on hair",
+      "color": "high contrast black and white, no mid-grey wash",
+      "mood": "tense, ambiguous, morally grey",
+      "style": "classic 1940s film noir, The Third Man influence",
+      "quality": "film grain, true blacks, ultra-sharp"
+    },
+    "cinematic-blade-runner": {
+      "composition": "vertical city scale, foreground silhouette, atmospheric perspective into haze",
+      "camera": "85mm at f/1.4, soft bokeh, anamorphic flare",
+      "lighting": "neon practicals, magenta and cyan, volumetric rain, steam, holographic accents",
+      "color": "magenta-cyan palette, crushed blacks, glowing highlights",
+      "mood": "melancholic, monumental, alienated",
+      "style": "Blade Runner 2049, Roger Deakins, Syd Mead influence",
+      "quality": "8k, ultra-detailed, cinematic grade, atmospheric depth"
+    },
+    "cyberpunk-street": {
+      "composition": "low angle, rain-slicked pavement reflections, dense vertical signage",
+      "camera": "35mm at f/2, slight tilt-shift effect",
+      "lighting": "neon dominated, magenta and cyan, holographic billboards, harsh practicals",
+      "color": "magenta, cyan, electric blue, with sodium-vapor orange accents",
+      "mood": "alienated, hyper-stimulated, gritty",
+      "style": "Akira, Ghost in the Shell, Blade Runner influence",
+      "quality": "8k, ultra-detailed, atmospheric particles"
+    },
+    "synthwave": {
+      "composition": "centered grid horizon, vanishing point, mountain or sun backdrop",
+      "camera": "wide flat composition, retro grain",
+      "lighting": "magenta-purple gradient sky, lens flare from sun, glowing grid lines",
+      "color": "magenta, purple, hot pink, neon teal, sunset orange",
+      "mood": "nostalgic, dreamlike, retrofuture",
+      "style": "Outrun / Miami Vice / Tron influence, 1980s aesthetic",
+      "quality": "8k, chromatic aberration, scanlines optional, glow effects"
+    },
+    "vaporwave": {
+      "composition": "centered classical sculpture or palm, gridded floor, soft pastel sky",
+      "camera": "flat, posterized",
+      "lighting": "even ambient, no shadows, glowing edges",
+      "color": "pastel pink, teal, lavender, pale yellow",
+      "mood": "ironic-nostalgic, dreamlike, vaguely melancholy",
+      "style": "early-90s mall aesthetic, Japanese city pop album art",
+      "quality": "VHS texture, slight glitch, glow"
+    },
+    "anime-modern": {
+      "composition": "dynamic pose, three-quarter angle, expressive face, motion lines if action",
+      "camera": "flat 2D, cel-shaded perspective",
+      "lighting": "soft cel-shading, single light source, glowing edges on key moments",
+      "color": "vibrant saturated palette, accent neon highlights",
+      "mood": "energetic, emotionally heightened",
+      "style": "modern shounen anime, Demon Slayer / Jujutsu Kaisen influence",
+      "quality": "professional anime production cel, sharp linework"
+    },
+    "studio-ghibli": {
+      "composition": "wide environmental shot with small human figure, naturalistic framing",
+      "camera": "flat 2D, hand-painted",
+      "lighting": "soft natural daylight, warm golden hour, gentle ambient occlusion",
+      "color": "saturated greens, warm earth tones, soft blue skies",
+      "mood": "wonder, gentle, nostalgic, hopeful",
+      "style": "Studio Ghibli, Miyazaki, hand-painted backgrounds, watercolor texture",
+      "quality": "hand-painted production quality, visible brushwork"
+    },
+    "makoto-shinkai": {
+      "composition": "vertical sky-heavy, dramatic clouds, urban or rural overlook",
+      "camera": "flat 2D, hyper-detailed background",
+      "lighting": "golden hour, magic-hour lens flare, god rays",
+      "color": "saturated sunset palette, cyan sky, warm orange clouds",
+      "mood": "longing, awe, bittersweet",
+      "style": "Makoto Shinkai, Your Name, Weathering With You influence",
+      "quality": "ultra-detailed background painting, photographic level of detail in animation"
+    },
+    "oil-painting": {
+      "composition": "classical balanced composition, painterly framing",
+      "camera": "n/a — painted",
+      "lighting": "Rembrandt lighting, single dominant key, deep shadows, chiaroscuro",
+      "color": "rich earth palette, deep umbers, warm flesh tones, dark backgrounds",
+      "mood": "weighty, contemplative, classical",
+      "style": "Dutch Golden Age, Rembrandt, Vermeer influence",
+      "quality": "museum-quality oil on canvas, visible brushstrokes, varnish glow"
+    },
+    "watercolor": {
+      "composition": "loose, gestural, negative space",
+      "camera": "n/a — painted",
+      "lighting": "diffused, no harsh shadows",
+      "color": "transparent washes, gentle bleeds, paper texture showing through",
+      "mood": "delicate, fresh, immediate",
+      "style": "traditional watercolor, John Singer Sargent or contemporary illustration",
+      "quality": "cold-press paper texture, soft edges, visible pigment granulation"
+    },
+    "ink-wash": {
+      "composition": "asymmetric, negative space dominant, single subject",
+      "camera": "n/a — painted",
+      "lighting": "implied, gradient washes",
+      "color": "sumi black ink on rice paper, occasional red seal",
+      "mood": "meditative, restrained, balanced",
+      "style": "Japanese sumi-e / Chinese guohua tradition",
+      "quality": "traditional brush, visible ink gradients, paper texture"
+    },
+    "pencil-sketch": {
+      "composition": "studied subject, construction lines visible",
+      "camera": "n/a — drawn",
+      "lighting": "hatching and cross-hatching for tonal modeling",
+      "color": "graphite grey on cream paper, occasional charcoal accents",
+      "mood": "studied, observational, intimate",
+      "style": "academic figure study, da Vinci notebook influence",
+      "quality": "high-grade graphite, visible paper tooth"
+    },
+    "comic-book": {
+      "composition": "dynamic action panel, bold foreshortening, strong silhouettes",
+      "camera": "n/a — illustrated",
+      "lighting": "high contrast, bold cast shadows, rim lighting",
+      "color": "limited palette, flat areas of saturated color, halftone shading",
+      "mood": "heroic, dramatic, kinetic",
+      "style": "modern American comic, Jim Lee / Sean Murphy influence",
+      "quality": "professional comic art, clean linework, color separations"
+    },
+    "manga-bw": {
+      "composition": "vertical panel composition, screentone backgrounds",
+      "camera": "n/a — illustrated",
+      "lighting": "black and white, screentone gradients",
+      "color": "pure black and white with screentone greys",
+      "mood": "varies by subject — typically intense and character-focused",
+      "style": "modern seinen manga, Inoue / Urasawa influence",
+      "quality": "professional inked linework, varied line weights"
+    },
+    "concept-art-painterly": {
+      "composition": "epic establishing shot, atmospheric perspective, scale through small figure",
+      "camera": "n/a — painted concept",
+      "lighting": "dramatic key from sky, rim lighting on hero element, atmospheric haze",
+      "color": "limited cinematic palette, complementary accents",
+      "mood": "epic, mysterious, scale-driven",
+      "style": "professional concept art, Craig Mullins / Feng Zhu influence, ArtStation trending",
+      "quality": "production-grade concept painting, painterly brushwork"
+    },
+    "matte-painting": {
+      "composition": "wide establishing shot, deep atmospheric perspective",
+      "camera": "n/a — composite",
+      "lighting": "naturalistic single-source, atmospheric depth",
+      "color": "filmic palette, integrated to plate",
+      "mood": "immersive, environmental",
+      "style": "film matte painting, Dylan Cole / Industrial Light & Magic influence",
+      "quality": "photorealistic composite, hyper-detailed"
+    },
+    "octane-render": {
+      "composition": "centered hero, balanced negative space",
+      "camera": "50mm at f/4, virtual camera",
+      "lighting": "studio HDRI, soft global illumination, ray-traced reflections",
+      "color": "physically accurate, PBR materials",
+      "mood": "polished, clean, premium",
+      "style": "Octane Render, Cinema 4D, modern motion-design aesthetic",
+      "quality": "8k, ray traced, PBR shaders, sub-pixel detail"
+    },
+    "unreal-engine": {
+      "composition": "in-game cinematic camera angle, environmental scale",
+      "camera": "cinematic camera, depth of field, lens flare",
+      "lighting": "Lumen global illumination, Nanite detail, virtual production lighting",
+      "color": "filmic tone mapping, cinematic LUT",
+      "mood": "immersive, AAA-game quality",
+      "style": "Unreal Engine 5.4, modern AAA cinematic, virtual production",
+      "quality": "8k, real-time path traced, photorealistic"
+    },
+    "pixar-3d": {
+      "composition": "appealing character pose, expressive silhouette",
+      "camera": "wide angle, slight low angle for hero",
+      "lighting": "soft three-point, rim light separation, warm key",
+      "color": "saturated, candy-store palette, complementary accents",
+      "mood": "warm, expressive, heartfelt",
+      "style": "Pixar Renderman, Toy Story / Up influence, appealing character design",
+      "quality": "production-grade animation render, subsurface scattering"
+    },
+    "low-poly": {
+      "composition": "centered subject, clean geometric environment",
+      "camera": "isometric or 35mm",
+      "lighting": "flat shading or simple toon shading, single light",
+      "color": "vibrant complementary palette, flat fills",
+      "mood": "playful, geometric, contemporary",
+      "style": "low-poly 3D, modern indie game aesthetic, Monument Valley influence",
+      "quality": "clean geometry, no anti-aliasing artifacts"
+    },
+    "isometric": {
+      "composition": "isometric perspective (30/60 angles), clean orthographic feel",
+      "camera": "isometric projection, no foreshortening",
+      "lighting": "soft directional light, gentle ambient occlusion",
+      "color": "clean palette, distinct material tones",
+      "mood": "tidy, miniature, considered",
+      "style": "isometric illustration, modern infographic aesthetic, SimCity influence",
+      "quality": "vector-clean, gallery-poster quality"
+    },
+    "pixel-art": {
+      "composition": "tight crop, readable silhouette, no anti-aliasing",
+      "camera": "n/a — pixel grid",
+      "lighting": "dithered shading, limited tonal steps",
+      "color": "restricted palette (8-32 colors), dithering patterns",
+      "mood": "retro, nostalgic, charming",
+      "style": "16-bit SNES era pixel art, Octopath Traveler HD-2D for modern variant",
+      "quality": "hand-pixeled, clean dithering, no scaling artifacts"
+    },
+    "claymation": {
+      "composition": "character-focused, theatrical staging",
+      "camera": "35mm, soft focus, slight handheld feel",
+      "lighting": "naturalistic stop-motion lighting, soft falloff",
+      "color": "earthy, slightly desaturated, tactile",
+      "mood": "warm, handmade, slightly uncanny",
+      "style": "Aardman / Laika studios, stop-motion clay aesthetic",
+      "quality": "visible fingerprints, real material texture, photographic capture"
+    },
+    "papercraft": {
+      "composition": "centered diorama, layered cut paper",
+      "camera": "macro 100mm at f/4",
+      "lighting": "soft directional, visible cast shadows on layers",
+      "color": "construction paper palette, slight texture",
+      "mood": "tactile, handmade, story-book",
+      "style": "Eric Carle / Jordan Clarke layered cut-paper illustration",
+      "quality": "real paper texture, visible cut edges, photographic capture"
+    },
+    "polaroid": {
+      "composition": "casual snapshot framing, slight off-center",
+      "camera": "Polaroid SX-70, fixed lens, instant film",
+      "lighting": "natural ambient, often slightly underexposed",
+      "color": "faded warm tones, slight color shift, vintage film palette",
+      "mood": "intimate, nostalgic, candid",
+      "style": "vintage Polaroid, 1970s aesthetic, white border",
+      "quality": "instant film texture, soft focus, light leaks optional"
+    },
+    "film-35mm-portra": {
+      "composition": "natural editorial framing",
+      "camera": "35mm SLR, Kodak Portra 400, 50mm lens",
+      "lighting": "natural daylight, golden hour preferred",
+      "color": "warm skin tones, soft greens, muted shadows, Portra signature palette",
+      "mood": "warm, present, editorial",
+      "style": "modern film photography aesthetic, hipster-renaissance",
+      "quality": "grainy but sharp, film grain visible, natural color science"
+    },
+    "film-super8": {
+      "composition": "handheld, slight tilt, vignette",
+      "camera": "Super 8 film camera, 8mm format",
+      "lighting": "available light, often warm tungsten or sunlight",
+      "color": "warm shift, faded blacks, washed highlights",
+      "mood": "nostalgic, dreamlike, home-movie intimate",
+      "style": "1970s home movie aesthetic, faded family album",
+      "quality": "visible film grain, slight gate weave, scratches optional"
+    },
+    "concept-vehicle": {
+      "composition": "three-quarter side view, hero studio backdrop",
+      "camera": "85mm at f/8, virtual camera",
+      "lighting": "studio HDRI, rim light along silhouette",
+      "color": "metallic body, accent neon underglow optional",
+      "mood": "aspirational, futuristic, engineered",
+      "style": "Syd Mead / Vincent Calleba concept vehicle design",
+      "quality": "production-grade concept render, ArtStation hero quality"
+    },
+    "character-design": {
+      "composition": "T-pose or three-quarter hero pose, full body, expression sheet feel",
+      "camera": "flat illustration",
+      "lighting": "soft even lighting for readability",
+      "color": "vibrant character palette, accent color identifies role",
+      "mood": "appealing, instantly readable, story-ready",
+      "style": "professional character design, Riot Games / Blizzard influence",
+      "quality": "production-grade character sheet, clean linework"
+    },
+    "brutalist-architecture": {
+      "composition": "low angle emphasizing mass, geometric symmetry",
+      "camera": "16mm wide at f/11",
+      "lighting": "harsh midday, deep shadows, sculptural light",
+      "color": "raw concrete grey, occasional rust orange or moss green",
+      "mood": "monumental, oppressive, sublime",
+      "style": "Brutalist architecture, Le Corbusier / Tadao Ando influence",
+      "quality": "8k, ultra-sharp, architectural photography quality"
+    },
+    "art-deco": {
+      "composition": "vertical symmetry, geometric ornamentation, sunburst motifs",
+      "camera": "n/a — illustrated",
+      "lighting": "stylized, no naturalistic shadow",
+      "color": "black, gold, deep teal, ivory, jewel tones",
+      "mood": "luxurious, geometric, monumental",
+      "style": "Art Deco, 1920s-30s poster art, Erté influence",
+      "quality": "clean vector aesthetic, gold foil texture optional"
+    },
+    "art-nouveau": {
+      "composition": "ornate organic framing, flowing curves, symbolic motifs",
+      "camera": "n/a — illustrated",
+      "lighting": "flat decorative",
+      "color": "muted earth tones, mossy greens, dusty rose, gold accents",
+      "mood": "romantic, organic, decorative",
+      "style": "Art Nouveau, Alphonse Mucha influence",
+      "quality": "ornate decorative illustration, gallery print quality"
+    },
+    "ukiyo-e": {
+      "composition": "flat layered planes, asymmetric balance, decorative pattern",
+      "camera": "n/a — printed",
+      "lighting": "flat, no naturalistic light",
+      "color": "limited woodblock palette, blue dominant (Hokusai blue), red accents",
+      "mood": "stylized, narrative, observational",
+      "style": "Japanese ukiyo-e woodblock, Hokusai / Hiroshige influence",
+      "quality": "traditional woodblock print texture, visible paper grain"
+    },
+    "psychedelic-60s": {
+      "composition": "symmetric, mandala-like, swirling type if applicable",
+      "camera": "n/a — illustrated",
+      "lighting": "flat trippy",
+      "color": "hot pink, electric orange, lime green, purple — vibrating complementaries",
+      "mood": "trippy, euphoric, kaleidoscopic",
+      "style": "1960s Fillmore poster art, Wes Wilson / Victor Moscoso influence",
+      "quality": "screenprint texture, slight registration offset"
+    },
+    "surrealist": {
+      "composition": "impossible juxtaposition, dreamlike scale, melting forms",
+      "camera": "n/a — painted",
+      "lighting": "stark, often single-source, long shadows",
+      "color": "vivid skies, naturalistic forms, surreal juxtaposition",
+      "mood": "dreamlike, uncanny, symbolic",
+      "style": "Surrealism, Dali / Magritte / Tanguy influence",
+      "quality": "oil-painting realism applied to impossible scenes"
+    },
+    "minimalist-poster": {
+      "composition": "massive negative space, single hero element, type if applicable",
+      "camera": "n/a — graphic",
+      "lighting": "flat",
+      "color": "two or three colors max, high contrast",
+      "mood": "calm, considered, premium",
+      "style": "Swiss / international typographic style, modern minimalism",
+      "quality": "vector clean, gallery poster quality"
+    },
+    "studio-product-dramatic": {
+      "composition": "low angle hero shot, dynamic perspective",
+      "camera": "24mm at f/8, slight tilt",
+      "lighting": "single hard key from above, deep shadows, rim accents",
+      "color": "moody dark background, single saturated accent on product",
+      "mood": "premium, theatrical, hero",
+      "style": "luxury watch / car commercial photography",
+      "quality": "8k, ultra-sharp, retoucher polish"
+    },
+    "fashion-editorial": {
+      "composition": "model-centered, stylized pose, location or studio",
+      "camera": "85mm at f/2, full-frame",
+      "lighting": "high-fashion lighting, often single strong key with deep shadow",
+      "color": "cinematic grade, often desaturated with single bold accent",
+      "mood": "aspirational, edgy, atmospheric",
+      "style": "Vogue / Numéro editorial, Steven Meisel / Tim Walker influence",
+      "quality": "magazine-spread quality, retoucher-grade"
+    },
+    "fantasy-painterly": {
+      "composition": "epic scale, atmospheric perspective, hero on focal point",
+      "camera": "n/a — painted",
+      "lighting": "dramatic sky lighting, rim on hero, atmospheric haze",
+      "color": "epic cinematic palette, complementary accents",
+      "mood": "epic, heroic, mythological",
+      "style": "Frank Frazetta / Brom / Justin Sweet fantasy illustration",
+      "quality": "painterly oil-aesthetic digital, ArtStation hero quality"
+    },
+    "scifi-clean": {
+      "composition": "geometric symmetry, deep linear perspective, hero tech element",
+      "camera": "wide environmental, 24mm at f/8",
+      "lighting": "clean white-and-blue panels, volumetric haze, cool key",
+      "color": "white, light grey, electric blue, accent magenta",
+      "mood": "sterile, advanced, slightly inhuman",
+      "style": "2001: A Space Odyssey / Apple / Syd Mead clean sci-fi",
+      "quality": "8k ultra-detailed, surgical precision"
+    },
+    "scifi-gritty": {
+      "composition": "claustrophobic interior or weathered exterior, layered industrial detail",
+      "camera": "anamorphic 40mm at f/2.8",
+      "lighting": "harsh practicals, deep shadows, atmospheric haze, sparks or steam",
+      "color": "rust, oil, grimy whites, occasional warning yellow",
+      "mood": "lived-in, dangerous, industrial",
+      "style": "Alien / Blade Runner / The Expanse aesthetic",
+      "quality": "8k, ultra-detailed surface weathering"
+    },
+    "horror-psychological": {
+      "composition": "uncomfortable framing, off-center subject, negative space looming",
+      "camera": "35mm at f/2.8, slight tilt for unease",
+      "lighting": "single weak source, vast areas of darkness, indirect illumination",
+      "color": "desaturated, sickly greens or cold blues, occasional bloodletting accent",
+      "mood": "dread, unease, wrongness without naming why",
+      "style": "Hereditary / The Witch / Robert Eggers influence",
+      "quality": "8k, ultra-sharp on the wrong details"
+    },
+    "horror-body": {
+      "composition": "extreme close, anatomical wrongness implied",
+      "camera": "macro 100mm at f/4",
+      "lighting": "harsh single source, deep shadows on flesh",
+      "color": "wet flesh tones, bruise palette, sickly highlights",
+      "mood": "visceral, transgressive",
+      "style": "Cronenberg / Junji Ito / Beksinski body horror",
+      "quality": "ultra-detailed grotesquery, photographic real"
+    },
+    "cottagecore": {
+      "composition": "natural environment, soft framing, gentle balance",
+      "camera": "50mm at f/2.8, soft focus",
+      "lighting": "golden hour or overcast soft, dappled through leaves",
+      "color": "soft greens, butter yellows, warm whites, lavender accents",
+      "mood": "gentle, pastoral, slow",
+      "style": "cottagecore aesthetic, Beatrix Potter influence",
+      "quality": "soft and painterly, magazine quality"
+    },
+    "dark-academia": {
+      "composition": "interior with old books, autumn light through tall windows",
+      "camera": "50mm at f/2",
+      "lighting": "warm tungsten or autumn daylight, deep shadows",
+      "color": "deep browns, forest greens, cream paper, brass accents",
+      "mood": "studious, melancholic, intellectual",
+      "style": "Dead Poets Society / Donna Tartt aesthetic",
+      "quality": "rich tonal depth, magazine quality"
+    },
+    "y2k-aesthetic": {
+      "composition": "centered glossy subject, slight 3D feel",
+      "camera": "flat with chrome reflections",
+      "lighting": "high gloss, hard reflections",
+      "color": "chrome silver, hot pink, electric blue, lime green",
+      "mood": "early-2000s optimism, slightly ironic now",
+      "style": "Y2K design, frosted plastic, chrome type, early-iMac aesthetic",
+      "quality": "glossy 3D look, slight CGI feel"
+    },
+    "tattoo-traditional": {
+      "composition": "centered emblem, bold black outline, symmetrical",
+      "camera": "n/a — illustrated",
+      "lighting": "flat",
+      "color": "limited tattoo palette: black, red, green, yellow, occasional blue",
+      "mood": "iconic, bold, declarative",
+      "style": "American traditional tattoo, Sailor Jerry influence",
+      "quality": "clean bold linework, traditional flash style"
+    },
+    "tattoo-fineline": {
+      "composition": "delicate single-subject, asymmetric balance",
+      "camera": "n/a — illustrated",
+      "lighting": "implied through stippling",
+      "color": "black ink only, no fill",
+      "mood": "delicate, personal, modern",
+      "style": "modern fine-line tattoo, single-needle aesthetic",
+      "quality": "ultra-fine linework, dotwork shading"
+    }
+  },
+  "image_quality_boosters": [
+    "8k", "ultra-detailed", "sharp focus", "professional",
+    "award-winning", "ArtStation trending", "Behance featured",
+    "cinematic composition", "studio quality", "magazine spread quality",
+    "photorealistic where applicable", "no compression artifacts"
+  ],
+  "image_negative_defaults": [
+    "blurry", "low quality", "watermark", "text artifacts", "deformed anatomy",
+    "extra limbs", "extra fingers", "bad hands", "amateur", "phone camera",
+    "oversaturated", "plastic skin", "uncanny valley", "AI artifacts"
+  ],
+  "role_library": {
+    "senior-engineer": "Senior software engineer with 10+ years building production systems. Prioritizes correctness, readability, and maintainability over cleverness. Skeptical of unnecessary abstractions. Writes code that the next person can ship.",
+    "senior-frontend": "Senior frontend engineer specializing in React + TypeScript + Tailwind. Cares about accessibility, performance budgets, and component reuse. Builds for production, not portfolio.",
+    "senior-backend": "Senior backend engineer specializing in Postgres, Node, and distributed systems. Cares about data integrity, observability, and operational simplicity.",
+    "devops-sre": "Senior DevOps/SRE engineer focused on reliability, cost, and incident response. Treats every change as potentially production-breaking until proven otherwise.",
+    "security-engineer": "Senior application security engineer. Thinks adversarially. Prioritizes auth, authz, input validation, supply-chain integrity, and secrets hygiene.",
+    "copywriter-direct-response": "Direct-response copywriter trained in the Halbert/Sugarman tradition. Writes to convert, not impress. Hates corporate jargon. Believes the headline does 80% of the work.",
+    "brand-copywriter": "Brand copywriter who develops voice systems and house style guides. Cares about consistency across surfaces. Refuses to use trend words.",
+    "ux-writer": "UX writer focused on microcopy clarity, error message quality, and the words users see in product. Minimizes cognitive load.",
+    "real-estate-agent-calgary": "Calgary-based residential real estate agent with deep knowledge of inner-city neighborhoods, condos, and first-time buyer programs. Direct, honest, no high-pressure sales tactics. Cites recent comparable sales.",
+    "real-estate-agent-luxury": "Luxury real estate agent specializing in high-end listings. Discreet, knowledgeable about architecture and provenance, never overstates.",
+    "marketing-strategist-b2b": "B2B marketing strategist focused on demand generation, content-led growth, and pipeline-accountable campaigns. Hates vanity metrics.",
+    "marketing-strategist-dtc": "DTC marketing strategist focused on paid social, lifecycle email, and creative-led growth. Measures everything against CAC payback.",
+    "growth-product-manager": "Growth PM who runs experiments end-to-end. Pragmatic about statistical rigor. Cares about ROI per learning, not test count.",
+    "research-analyst": "Senior research analyst who values primary sources, transparent methodology, and clearly stated assumptions over confident vibes. Always provides confidence ratings.",
+    "lawyer-plain-english": "Lawyer who explains complex legal concepts in plain English without losing precision. Flags risks honestly. Distinguishes legal advice from general information.",
+    "accountant-cra": "Canadian CPA specializing in small business and self-employed tax. Knows current CRA positions. Conservative on aggressive interpretations.",
+    "financial-advisor-canada": "Canadian financial planner (CFP) who works with mid-net-worth families. Tax-aware, fee-conscious, allergic to product pitches.",
+    "executive-coach": "Executive coach focused on senior individual contributors and first-time managers. Asks rather than tells. Holds two opposing ideas at once when needed.",
+    "therapist-cbt": "Licensed therapist trained in CBT. Asks open questions. Validates without enabling. Never diagnoses outside session.",
+    "personal-trainer-evidence-based": "Certified personal trainer who follows evidence-based programming. Distinguishes between bro-science and research consensus. Adapts plans to individual constraints.",
+    "nutritionist-rd": "Registered dietitian who is skeptical of fad diets and supplement marketing. Focuses on sustainable habit change.",
+    "interior-designer-modern": "Interior designer specializing in warm modern residential. Considers light, proportion, and lived-in functionality over trend.",
+    "architect-residential": "Residential architect focused on small-to-mid lot single-family. Cares about light, circulation, and budget reality.",
+    "chef-fine-dining": "Professional chef with fine-dining experience. Cares about technique, seasonality, and what actually tastes good versus what photographs well.",
+    "chef-home-cook": "Recipe developer focused on home cooks. Tests for the equipment a normal kitchen has. Optimizes for weeknight feasibility.",
+    "music-producer": "Music producer with mixing and mastering experience. Speaks both technical and creative. Cares about how a track translates across systems.",
+    "video-editor": "Video editor with feature and short-form experience. Understands pacing, sound design, and color. Builds for the platform.",
+    "ux-designer-saas": "Senior UX designer specializing in B2B SaaS. Cares about information density, edge cases, and admin/IT user roles.",
+    "ux-designer-consumer": "Senior product designer for consumer apps. Focuses on first-session delight, retention loops, and visual reward."
+  }
+}

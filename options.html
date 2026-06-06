@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PromptForge — Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>⚒ PromptForge</h1>
+      <p class="lede">Profile-aware prompt optimizer using OpenRouter + Claude Haiku 4.5.</p>
+    </header>
+
+    <section class="card" id="firstRunCard" hidden>
+      <h2>👋 First-run setup — 90 seconds</h2>
+      <ol>
+        <li><strong>Paste your OpenRouter API key</strong> below and click Save → Test connection. Cost: ~$0.004 per optimization, billed directly to your OpenRouter account.</li>
+        <li><strong>Edit the Default profile</strong> (or add a new one) — tell the model who you are, what business you run, who your audience is, and what voice you write in. This context gets baked into every prompt you optimize.</li>
+        <li><em>Optional</em>: set a custom Style Pack URL (default works fine, but you can host your own).</li>
+      </ol>
+      <p class="muted">No key yet? Get one at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> — $5 of credit ≈ 1,250 Haiku optimizations.</p>
+    </section>
+
+    <section class="card">
+      <h2>OpenRouter</h2>
+      <label for="key">API key</label>
+      <input type="password" id="key" placeholder="sk-or-v1-..." autocomplete="off" />
+      <label for="model">Model</label>
+      <select id="model">
+        <option value="anthropic/claude-haiku-4-5">Claude Haiku 4.5 — recommended (cheap + smart)</option>
+        <option value="anthropic/claude-sonnet-4-6">Claude Sonnet 4.6 — higher quality, 5x cost</option>
+        <option value="openai/gpt-4o-mini">GPT-4o mini — alternative cheap</option>
+        <option value="openai/gpt-4.1">GPT-4.1 — premium</option>
+        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash — fast + cheap</option>
+        <option value="meta-llama/llama-4-maverick">Llama 4 Maverick — open</option>
+      </select>
+      <div class="row">
+        <button id="saveKey" class="primary">Save</button>
+        <button id="testKey" class="secondary">Test connection</button>
+      </div>
+      <p class="muted">Stored locally in <code>chrome.storage.local</code>. Never synced to your Google account. Never sent anywhere except OpenRouter when you click Optimize.</p>
+    </section>
+
+    <section class="card">
+      <h2>Profiles</h2>
+      <p class="muted">Tell the optimizer who you are so every prompt is written in your voice, for your audience. Make one profile per role (e.g. Real Estate, True Color, Personal).</p>
+      <div id="profileList"></div>
+      <div class="row">
+        <button id="newProfile" class="secondary">+ New profile</button>
+        <button id="exportProfiles" class="secondary">Export JSON</button>
+        <button id="importProfiles" class="secondary">Import JSON</button>
+        <input type="file" id="importFile" accept="application/json" hidden />
+      </div>
+    </section>
+
+    <section class="card" id="profileEditor" hidden>
+      <h2 id="editorTitle">Edit profile</h2>
+      <label for="p-template">Start from a template <span class="muted">(optional — pre-fills role + voice)</span></label>
+      <select id="p-template">
+        <option value="">— blank —</option>
+      </select>
+      <label for="p-name">Name (label only)</label>
+      <input type="text" id="p-name" placeholder="e.g. Real Estate Hasan" />
+      <label for="p-role">Your role / title</label>
+      <input type="text" id="p-role" placeholder="e.g. Real estate agent" />
+      <label for="p-business">Business / domain</label>
+      <input type="text" id="p-business" placeholder="e.g. Calgary residential real estate, first-time buyers" />
+      <label for="p-audience">Primary audience</label>
+      <input type="text" id="p-audience" placeholder="e.g. First-time buyers, $400k-$700k budget, mostly young professionals" />
+      <label for="p-voice">Voice / tone</label>
+      <input type="text" id="p-voice" placeholder="e.g. Direct, friendly, no pressure, no jargon" />
+      <label for="p-must">Must include</label>
+      <input type="text" id="p-must" placeholder="e.g. one specific local insight per email" />
+      <label for="p-avoid">Must avoid</label>
+      <input type="text" id="p-avoid" placeholder="e.g. corporate-speak, exclamation marks, hype words" />
+      <label for="p-sig">Sign-off / signature</label>
+      <textarea id="p-sig" rows="3" placeholder="e.g. Hasan Sharif | Real Estate Agent | 403-555-1234"></textarea>
+      <label for="p-notes">Additional context</label>
+      <textarea id="p-notes" rows="3" placeholder="Anything else the AI should know — recurring topics, brand quirks, taboo phrases"></textarea>
+      <label for="p-custom">Custom system-prompt addendum <span class="muted">(power feature — appended to every optimization for this profile)</span></label>
+      <textarea id="p-custom" rows="4" placeholder="e.g. Always include a specific market stat. Always cite recent sales. Avoid weasel words like &quot;might&quot; or &quot;could possibly&quot;."></textarea>
+      <div class="row">
+        <button id="saveProfile" class="primary">Save profile</button>
+        <button id="cancelEdit" class="secondary">Cancel</button>
+        <button id="deleteProfile" class="danger" hidden>Delete</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Style pack (OTA updates)</h2>
+      <label for="packUrl">Pack URL</label>
+      <input type="url" id="packUrl" placeholder="https://tubby124.github.io/promptforge-packs/v1.json" />
+      <div class="row">
+        <button id="savePackUrl" class="primary">Save</button>
+        <button id="refreshPack" class="secondary">Refresh now</button>
+      </div>
+      <p class="muted">Pack version: <span id="packVersion">checking…</span></p>
+      <p class="muted">Style packs contain image-gen modifiers, role templates, and category guidance. Edit the JSON in the repo + push → users get it within 6 hours.</p>
+    </section>
+
+    <footer>
+      <p class="muted">PromptForge v0.2.0 · <a href="https://github.com/tubby124/promptforge" target="_blank" rel="noopener">github</a></p>
+    </footer>
+  </main>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

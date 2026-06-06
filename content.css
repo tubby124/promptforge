@@ -1,0 +1,28 @@
+#pf-floating-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a59, #ff5f3d);
+  color: #1b1b1b;
+  font-size: 20px;
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(255, 122, 89, 0.45), 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  font-family: -apple-system, system-ui, sans-serif;
+}
+#pf-floating-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 8px 28px rgba(255, 122, 89, 0.55), 0 3px 8px rgba(0,0,0,0.35);
+}
+#pf-floating-btn:active {
+  transform: scale(0.96);
+}

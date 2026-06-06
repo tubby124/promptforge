@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PromptForge</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body class="pf-body" data-mode="popup">
+  <header class="pf-header">
+    <div class="pf-brand">
+      <span class="pf-logo">⚒</span>
+      <span class="pf-name">PromptForge</span>
+    </div>
+    <div class="pf-header-actions">
+      <button id="pf-toggle-history" class="pf-icon-btn" title="History" aria-label="Toggle history">⏱</button>
+      <button id="pf-open-options" class="pf-icon-btn" title="Settings" aria-label="Open settings">⚙</button>
+    </div>
+  </header>
+
+  <section id="pf-setup-warning" class="pf-warn-banner" hidden></section>
+
+  <section id="pf-history-panel" class="pf-history" hidden>
+    <div class="pf-history-header">
+      <span>Recent</span>
+      <button id="pf-clear-history" class="pf-text-btn">Clear all</button>
+    </div>
+    <ul id="pf-history-list" class="pf-history-list"></ul>
+  </section>
+
+  <section class="pf-controls">
+    <div class="pf-row pf-row-mode">
+      <label>Mode</label>
+      <div class="pf-mode-toggle" role="tablist" aria-label="Optimization mode">
+        <button id="pf-mode-sharpen" class="pf-mode pf-mode-active" data-mode="sharpen" role="tab" aria-selected="true" title="Light pass — preserves voice and length. Default.">Sharpen</button>
+        <button id="pf-mode-deep" class="pf-mode" data-mode="deep" role="tab" aria-selected="false" title="Full Lyra-4D heavyweight pass. Structured sections, role, output spec.">Deep</button>
+      </div>
+    </div>
+    <div class="pf-row">
+      <label for="pf-profile">Profile</label>
+      <select id="pf-profile"></select>
+    </div>
+    <div class="pf-row">
+      <label for="pf-category">Category</label>
+      <select id="pf-category">
+        <option value="auto">Auto-detect</option>
+        <option value="general">General</option>
+        <option value="email">Email</option>
+        <option value="image-gen">Image generation</option>
+        <option value="code">Code</option>
+        <option value="marketing">Marketing</option>
+        <option value="research">Research</option>
+      </select>
+    </div>
+    <div class="pf-row">
+      <label for="pf-target">Target AI</label>
+      <select id="pf-target">
+        <option value="auto">Auto</option>
+        <option value="chatgpt">ChatGPT</option>
+        <option value="claude">Claude</option>
+        <option value="gemini">Gemini</option>
+        <option value="perplexity">Perplexity</option>
+        <option value="grok">Grok</option>
+        <option value="midjourney">Midjourney</option>
+        <option value="image-gen">Image-gen (any)</option>
+        <option value="generic">Generic</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="pf-input">
+    <label for="pf-raw">Paste your rough prompt</label>
+    <textarea id="pf-raw" rows="6" placeholder="e.g. write me an email to my landlord asking for a maintenance fix"></textarea>
+    <div class="pf-tag" id="pf-detected"></div>
+  </section>
+
+  <div class="pf-actions">
+    <button id="pf-optimize" class="pf-primary">Optimize ⚡</button>
+    <button id="pf-clear" class="pf-secondary">Clear</button>
+  </div>
+
+  <section class="pf-output" id="pf-output-section" hidden>
+    <div class="pf-output-header">
+      <div class="pf-tabs" role="tablist">
+        <button id="pf-tab-optimized" class="pf-tab pf-tab-active" data-tab="optimized" role="tab" aria-selected="true">Optimized</button>
+        <button id="pf-tab-original" class="pf-tab" data-tab="original" role="tab" aria-selected="false">Original</button>
+      </div>
+      <div class="pf-meta" id="pf-meta"></div>
+    </div>
+    <textarea id="pf-result" rows="10" readonly></textarea>
+    <textarea id="pf-original" rows="10" readonly hidden></textarea>
+    <div class="pf-actions">
+      <button id="pf-copy" class="pf-primary">Copy</button>
+      <button id="pf-inject" class="pf-secondary">Inject into page</button>
+      <button id="pf-regenerate" class="pf-secondary" title="Run again (same input, same settings)">↻ Regenerate</button>
+    </div>
+    <details class="pf-debug">
+      <summary>View system prompt</summary>
+      <pre id="pf-debug-system"></pre>
+    </details>
+  </section>
+
+  <div class="pf-status" id="pf-status" role="status" aria-live="polite"></div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

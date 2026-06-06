@@ -1,0 +1,172 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #0e0f12;
+  --panel: #161821;
+  --panel-2: #1d2030;
+  --border: #2a2e42;
+  --text: #e7e9f1;
+  --muted: #8b90a7;
+  --accent: #ff7a59;
+  --accent-2: #6ea8ff;
+  --success: #54d68a;
+  --warn: #ffb547;
+  --error: #ff6b6b;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 460px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}
+/* When opened as a standalone window from a content script, we want a wider layout. */
+body.pf-standalone, body.pf-standalone[data-mode] { width: 100%; min-width: 660px; max-width: 760px; margin: 0 auto; }
+html.pf-standalone { width: 100%; }
+body { padding: 12px 14px 14px; }
+
+.pf-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 8px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.pf-brand { display: flex; align-items: center; gap: 8px; }
+.pf-logo { font-size: 18px; }
+.pf-name { font-weight: 600; letter-spacing: 0.2px; }
+.pf-header-actions { display: flex; gap: 6px; }
+.pf-icon-btn {
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px 8px; cursor: pointer; font-size: 14px;
+}
+.pf-icon-btn:hover { color: var(--text); border-color: var(--accent-2); }
+
+.pf-history {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.pf-history-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+  font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px;
+}
+.pf-text-btn {
+  background: transparent; color: var(--accent-2); border: 0; padding: 0;
+  font: inherit; cursor: pointer; text-transform: none; letter-spacing: 0;
+}
+.pf-text-btn:hover { text-decoration: underline; }
+.pf-history-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pf-history-item {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.pf-history-item:hover { border-color: var(--accent-2); }
+.pf-history-snippet { font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-history-meta { font-size: 10px; color: var(--muted); }
+.pf-history-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 12px 0; }
+
+.pf-controls {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  margin-bottom: 10px;
+}
+.pf-row { display: flex; flex-direction: column; gap: 4px; }
+.pf-row label, .pf-input label, .pf-output label {
+  font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px;
+}
+.pf-row select, .pf-input textarea, .pf-output textarea {
+  width: 100%;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; font: inherit; resize: vertical;
+}
+.pf-row select:focus, .pf-input textarea:focus, .pf-output textarea:focus {
+  outline: none; border-color: var(--accent-2);
+}
+.pf-input { margin-bottom: 8px; }
+.pf-tag {
+  font-size: 11px; color: var(--muted); margin-top: 4px; min-height: 14px;
+}
+.pf-actions {
+  display: flex; gap: 8px; margin: 8px 0;
+}
+.pf-primary, .pf-secondary {
+  flex: 1; padding: 9px 12px; border-radius: 8px; cursor: pointer;
+  font: inherit; font-weight: 600; transition: filter 0.1s;
+}
+.pf-primary { background: var(--accent); color: #1b1b1b; border: 0; }
+.pf-primary:hover { filter: brightness(1.08); }
+.pf-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.pf-secondary {
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+}
+.pf-secondary:hover { border-color: var(--accent-2); }
+
+.pf-output { margin-top: 8px; }
+.pf-output-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 6px;
+}
+.pf-tabs { display: flex; gap: 4px; }
+.pf-tab {
+  background: transparent; color: var(--muted); border: 1px solid transparent;
+  padding: 4px 10px; border-radius: 6px; cursor: pointer;
+  font: inherit; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+}
+.pf-tab:hover { color: var(--text); }
+.pf-tab-active { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+.pf-meta { font-size: 10px; color: var(--muted); text-align: right; line-height: 1.4; }
+
+.pf-status {
+  margin-top: 6px; font-size: 11px; min-height: 14px;
+}
+.pf-status.ok { color: var(--success); }
+.pf-status.warn { color: var(--warn); }
+.pf-status.err { color: var(--error); }
+
+.pf-warn-banner {
+  background: rgba(255, 181, 71, 0.08); color: var(--warn);
+  border: 1px solid rgba(255, 181, 71, 0.3); border-radius: 8px;
+  padding: 8px 10px; margin-bottom: 8px; font-size: 12px;
+}
+.pf-warn-banner a {
+  color: var(--accent-2); text-decoration: none; cursor: pointer; font-weight: 600;
+}
+.pf-warn-banner a:hover { text-decoration: underline; }
+
+.pf-row-mode { grid-column: 1 / -1; }
+.pf-mode-toggle {
+  display: inline-flex; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; padding: 2px; gap: 2px; width: fit-content;
+}
+.pf-mode {
+  background: transparent; color: var(--muted); border: 0;
+  padding: 5px 14px; border-radius: 6px; cursor: pointer;
+  font: inherit; font-size: 12px; font-weight: 600;
+}
+.pf-mode:hover { color: var(--text); }
+.pf-mode-active { background: var(--accent); color: #1b1b1b; }
+.pf-mode-locked { opacity: 0.6; cursor: not-allowed; }
+
+.pf-debug {
+  margin-top: 8px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px;
+}
+.pf-debug summary {
+  cursor: pointer; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.6px;
+}
+.pf-debug summary:hover { color: var(--text); }
+.pf-debug pre {
+  margin: 6px 0 0; padding: 8px; background: var(--panel-2);
+  border-radius: 6px; max-height: 220px; overflow: auto;
+  font-size: 11px; color: var(--text); white-space: pre-wrap; word-break: break-word;
+}

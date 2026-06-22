@@ -145,7 +145,7 @@ body { padding: 12px 14px 14px; }
 }
 .pf-attachments {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto auto 1fr;
   gap: 8px;
   align-items: start;
   margin-top: 8px;
@@ -206,6 +206,36 @@ body { padding: 12px 14px 14px; }
   font: inherit;
 }
 .pf-image-chip button:hover { color: var(--text); }
+.pf-page-context {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 7px 8px;
+  background: rgba(84, 214, 138, 0.08);
+  border: 1px solid rgba(84, 214, 138, 0.26);
+  border-radius: 8px;
+  color: var(--success);
+  font-size: 11px;
+}
+.pf-page-context span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-page-context button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(84, 214, 138, 0.12);
+  color: var(--success);
+  cursor: pointer;
+  font: inherit;
+}
+.pf-page-context button:hover { color: var(--text); }
 .pf-tag {
   font-size: 11px; color: var(--muted); margin-top: 4px; min-height: 14px;
 }

@@ -71,6 +71,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       .catch((err) => sendResponse({ ok: false, error: err.message || String(err) }));
     return true;
   }
+  if (msg?.type === 'PF_SCAN_PAGE') {
+    scanActivePage()
+      .then((context) => sendResponse({ ok: true, context }))
+      .catch((err) => sendResponse({ ok: false, error: err.message || String(err) }));
+    return true;
+  }
   if (msg?.type === 'PF_OPEN_POPUP') {
     openStandalonePopup();
     sendResponse({ ok: true });
@@ -98,7 +104,7 @@ function safePost(port, msg) {
 }
 
 async function streamOptimize(payload, port, isAborted) {
-  const { rawInput, profileId, category, targetAi, mode, images = [], threadContext = null } = payload || {};
+  const { rawInput, profileId, category, targetAi, mode, images = [], threadContext = null, pageContext = null } = payload || {};
   const { openrouterKey, model } = await chrome.storage.local.get(['openrouterKey', 'model']);
   if (!openrouterKey) throw new Error('Set your OpenRouter API key in PromptForge Settings first.');
 
@@ -118,7 +124,7 @@ async function streamOptimize(payload, port, isAborted) {
     stream: true,
     messages: [
       { role: 'system', content: system },
-      { role: 'user', content: buildUserMessageContent(rawInput, images, threadContext) },
+      { role: 'user', content: buildUserMessageContent(rawInput, images, threadContext, pageContext) },
     ],
   };
 
@@ -148,6 +154,7 @@ async function streamOptimize(payload, port, isAborted) {
     imageCount: images.length,
     imageNames: images.map((img) => img.name).filter(Boolean),
     continuedFrom: summarizeThreadContext(threadContext),
+    pageContext: summarizePageContext(pageContext),
     mode: effectiveMode,
     systemPrompt: system,
   };
@@ -156,9 +163,9 @@ async function streamOptimize(payload, port, isAborted) {
   safePost(port, { type: 'done', result });
 }
 
-function buildUserMessageContent(rawInput, images, threadContext) {
+function buildUserMessageContent(rawInput, images, threadContext, pageContext) {
   const validImages = normalizeImages(images);
-  const text = buildUserText(rawInput, validImages, threadContext);
+  const text = buildUserText(rawInput, validImages, threadContext, pageContext);
   if (!validImages.length) return text;
 
 
@@ -171,8 +178,20 @@ function buildUserMessageContent(rawInput, images, threadContext) {
   ];
 }
 
-function buildUserText(rawInput, images, threadContext) {
+function buildUserText(rawInput, images, threadContext, pageContext) {
   const blocks = [];
+  const page = normalizePageContext(pageContext);
+  if (page) {
+    blocks.push([
+      'Scanned page context:',
+      page.title ? `Title: ${page.title}` : '',
+      page.url ? `URL: ${page.url}` : '',
+      page.selection ? `User selection:\n${page.selection}` : '',
+      `Visible page text:\n${page.text}`,
+      'Use the scanned page context to understand what is going on. Do not quote private page text unless the user asks. If drafting a reply, answer the situation shown on the page.',
+    ].filter(Boolean).join('\n\n'));
+  }
+
   const ctx = normalizeThreadContext(threadContext);
   if (ctx) {
     blocks.push([
@@ -234,6 +253,30 @@ function summarizeThreadContext(threadContext) {
     id: ctx.id,
     category: ctx.category,
     targetAi: ctx.targetAi,
+  };
+}
+
+function normalizePageContext(pageContext) {
+  if (!pageContext || typeof pageContext !== 'object') return null;
+  const text = String(pageContext.text || '').trim().slice(0, 12000);
+  const selection = String(pageContext.selection || '').trim().slice(0, 3000);
+  if (!text && !selection) return null;
+  return {
+    title: String(pageContext.title || '').trim().slice(0, 300),
+    url: String(pageContext.url || '').trim().slice(0, 500),
+    host: String(pageContext.host || '').trim().slice(0, 120),
+    selection,
+    text,
+  };
+}
+
+function summarizePageContext(pageContext) {
+  const ctx = normalizePageContext(pageContext);
+  if (!ctx) return null;
+  return {
+    title: ctx.title,
+    host: ctx.host,
+    chars: ctx.text.length + ctx.selection.length,
   };
 }
 
@@ -359,6 +402,37 @@ function estimateCost(model, usage, pack) {
   return ((inTok * p.in) + (outTok * p.out)) / 1_000_000;
 }
 
+async function scanActivePage() {
+  const tab = await findUsableActiveTab();
+  if (!tab?.id) throw new Error('No active web page to scan.');
+
+  const result = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: collectPageContext,
+  });
+  const context = result?.[0]?.result;
+  if (!context?.text && !context?.selection) throw new Error('No readable text found on this page.');
+  return {
+    ...context,
+    url: tab.url || context.url || '',
+    host: tab.url ? new URL(tab.url).hostname : context.host || '',
+    capturedAt: Date.now(),
+  };
+}
+
+async function findUsableActiveTab() {
+  const isUsable = (t) => t?.id && t.url && !/^(chrome|chrome-extension|edge|about):/i.test(t.url);
+  const queryActiveWin = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (isUsable(queryActiveWin[0])) return queryActiveWin[0];
+
+  const wins = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
+  for (const w of wins) {
+    const t = w.tabs?.find(isUsable);
+    if (t) return t;
+  }
+  return null;
+}
+
 async function injectIntoActiveTab(text) {
   let tab;
   const queryActiveWin = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -398,6 +472,68 @@ async function getAdapterForTab(tab) {
     }
   } catch {}
   return null;
+}
+
+// Runs in the page. Keep dependency-free; Chrome serializes this function.
+function collectPageContext() {
+  const MAX_TEXT = 12000;
+  const MAX_SELECTION = 3000;
+  const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+  const selection = clean(window.getSelection?.().toString()).slice(0, MAX_SELECTION);
+  const title = clean(document.title);
+  const meta = clean(document.querySelector('meta[name="description"]')?.content || '');
+  const url = location.href;
+  const host = location.hostname;
+
+  const root =
+    document.querySelector('[role="main"]') ||
+    document.querySelector('main') ||
+    document.querySelector('article') ||
+    document.body;
+
+  const blocked = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'CANVAS', 'IFRAME']);
+  const parts = [];
+  const seen = new Set();
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+    acceptNode(node) {
+      if (blocked.has(node.tagName)) return NodeFilter.FILTER_REJECT;
+      const style = window.getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      const rect = node.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return NodeFilter.FILTER_SKIP;
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
+
+  const push = (text) => {
+    const t = clean(text);
+    if (!t || t.length < 2 || seen.has(t)) return;
+    seen.add(t);
+    parts.push(t);
+  };
+
+  push(meta);
+  let node = walker.currentNode;
+  while (node && parts.join('\n').length < MAX_TEXT) {
+    const tag = node.tagName;
+    const role = node.getAttribute?.('role') || '';
+    if (
+      ['H1', 'H2', 'H3', 'P', 'LI', 'TD', 'TH', 'LABEL', 'BUTTON', 'A', 'TEXTAREA'].includes(tag) ||
+      ['article', 'listitem', 'heading'].includes(role) ||
+      node.matches?.('[data-message-author-role], [data-testid*="message"], [aria-label*="Message"]')
+    ) {
+      push(tag === 'TEXTAREA' ? node.value : node.innerText);
+    }
+    node = walker.nextNode();
+  }
+
+  let text = parts.join('\n').slice(0, MAX_TEXT);
+  if (!text) text = clean(root?.innerText || document.body?.innerText || '').slice(0, MAX_TEXT);
+
+  return { title, url, host, selection, text };
 }
 
 // Runs in the page context. Tries pack-supplied selectors first, then a generic

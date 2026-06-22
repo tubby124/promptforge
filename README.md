@@ -43,6 +43,12 @@ That's it. You're set.
 - Click it → opens the optimizer with whatever you typed already pre-filled
 - Or use the keyboard shortcut: **Cmd+Shift+O** (Mac) / **Ctrl+Shift+O** (Win/Linux)
 
+### Scanning the current page
+- Click **Scan page** to attach visible text from the active tab as context
+- If you selected text first, the selection is included and prioritized
+- Use it for email replies, customer messages, support threads, or chat conversations where you want PromptForge to understand what is happening without pasting everything manually
+- Page context is sent only for that optimization and history stores only a small summary, not the full scanned text
+
 ### Working from an image
 - Click **Add image** in the popup and attach up to 3 PNG/JPG/WebP reference images
 - Type what you want changed, e.g. "resize this for a 4x8 ft banner, change the red to True Color blue, keep the logo sharp"

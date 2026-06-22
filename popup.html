@@ -79,7 +79,12 @@
     <div class="pf-attachments">
       <input id="pf-image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden />
       <button id="pf-attach-image" class="pf-secondary pf-attach-btn" type="button">Add image</button>
+      <button id="pf-scan-page" class="pf-secondary pf-attach-btn" type="button">Scan page</button>
       <div id="pf-image-list" class="pf-image-list" aria-live="polite"></div>
+    </div>
+    <div id="pf-page-context" class="pf-page-context" hidden>
+      <span id="pf-page-context-text"></span>
+      <button id="pf-clear-page-context" type="button" aria-label="Clear scanned page context">×</button>
     </div>
     <div class="pf-tag" id="pf-detected"></div>
   </section>

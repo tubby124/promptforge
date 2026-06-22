@@ -14,7 +14,11 @@ const els = {
   clearThread: $('pf-clear-thread'),
   imageInput: $('pf-image-input'),
   attachImage: $('pf-attach-image'),
+  scanPage: $('pf-scan-page'),
   imageList: $('pf-image-list'),
+  pageContext: $('pf-page-context'),
+  pageContextText: $('pf-page-context-text'),
+  clearPageContext: $('pf-clear-page-context'),
   detected: $('pf-detected'),
   optimize: $('pf-optimize'),
   clear: $('pf-clear'),
@@ -48,6 +52,7 @@ let lastResult = null;
 let activePort = null;
 let attachedImages = [];
 let threadContext = null;
+let pageContext = null;
 
 const MAX_IMAGES = 3;
 const MAX_IMAGE_DIMENSION = 1600;
@@ -76,6 +81,8 @@ async function init() {
   els.clearThread.addEventListener('click', clearThreadContext);
   els.attachImage.addEventListener('click', () => els.imageInput.click());
   els.imageInput.addEventListener('change', onImageInputChange);
+  els.scanPage.addEventListener('click', onScanPage);
+  els.clearPageContext.addEventListener('click', clearPageContext);
   els.profile.addEventListener('change', onProfileChange);
   els.category.addEventListener('change', refreshDetected);
   els.target.addEventListener('change', refreshDetected);
@@ -169,9 +176,10 @@ function refreshDetected() {
   const effectiveMode = isImage ? 'deep (forced — image-gen)' : mode;
   const imageStamp = attachedImages.length ? ` · ${attachedImages.length} image${attachedImages.length === 1 ? '' : 's'}` : '';
   const threadStamp = threadContext ? ' · continuing' : '';
+  const pageStamp = pageContext ? ' · page scanned' : '';
   els.detected.textContent = els.raw.value.trim()
-    ? `Detected: ${detectedCategory} · target: ${effectiveTgt} · using: ${effectiveCat} · mode: ${effectiveMode}${imageStamp}${threadStamp}`
-    : `Auto-detect ready · target: ${effectiveTgt} · mode: ${effectiveMode}${imageStamp}${threadStamp}`;
+    ? `Detected: ${detectedCategory} · target: ${effectiveTgt} · using: ${effectiveCat} · mode: ${effectiveMode}${imageStamp}${threadStamp}${pageStamp}`
+    : `Auto-detect ready · target: ${effectiveTgt} · mode: ${effectiveMode}${imageStamp}${threadStamp}${pageStamp}`;
 }
 
 function normalizeImageCategory(category) {
@@ -208,7 +216,7 @@ function hideSetupWarning() {
 }
 
 async function onOptimize() {
-  const rawInput = els.raw.value.trim();
+  const rawInput = els.raw.value.trim() || (pageContext ? 'Help me write the best reply or next prompt based on the scanned page context.' : '');
   if (!rawInput) {
     setStatus(attachedImages.length ? 'Tell me what to change about the image first.' : 'Paste something to optimize first.', 'warn');
     return;
@@ -227,6 +235,7 @@ async function onOptimize() {
     mode,
     images: attachedImages.map(({ id: _id, previewUrl: _previewUrl, ...rest }) => rest),
     threadContext: serializeThreadContext(threadContext),
+    pageContext: serializePageContext(pageContext),
   };
   await runOptimize(lastRequest, 'Optimizing…');
 }
@@ -311,7 +320,8 @@ function formatMetaHtml(r) {
   const m = (r.model || '').replace(/^anthropic\//, '').replace(/^openai\//, '').replace(/^google\//, '').replace(/^meta-llama\//, '');
   const img = r.imageCount ? ` · ${r.imageCount} img` : '';
   const cont = r.continuedFrom ? ' · continued' : '';
-  lines.push(`${m} · ${r.mode || 'sharpen'} · ${r.category}${r.targetAi ? ' → ' + r.targetAi : ''}${img}${cont}`);
+  const page = r.pageContext ? ' · page' : '';
+  lines.push(`${m} · ${r.mode || 'sharpen'} · ${r.category}${r.targetAi ? ' → ' + r.targetAi : ''}${img}${cont}${page}`);
   const tok = r.usage?.total_tokens || (r.usage?.prompt_tokens || 0) + (r.usage?.completion_tokens || 0);
   const cost = r.costUsd != null ? `$${r.costUsd.toFixed(4)}` : '—';
   lines.push(`${tok || '?'} tok · ${cost} · pack ${r.packVersion}`);
@@ -331,6 +341,7 @@ function switchTab(tab) {
 function onClear() {
   els.raw.value = '';
   clearThreadContext({ silent: true });
+  clearPageContext({ silent: true });
   attachedImages = [];
   renderAttachedImages();
   els.result.value = '';
@@ -418,6 +429,7 @@ async function renderHistory() {
 function loadHistoryEntry(item) {
   els.raw.value = item.raw || '';
   clearThreadContext({ silent: true });
+  clearPageContext({ silent: true });
   attachedImages = [];
   renderAttachedImages();
   els.category.value = 'auto';
@@ -534,6 +546,56 @@ async function onImageInputChange(ev) {
   }
 }
 
+async function onScanPage() {
+  setStatus('Scanning active page…');
+  try {
+    const res = await chrome.runtime.sendMessage({ type: 'PF_SCAN_PAGE' });
+    if (!res?.ok || !res.context?.text) {
+      throw new Error(res?.error || 'No readable page text found.');
+    }
+    pageContext = res.context;
+    renderPageContext();
+    refreshDetected();
+    if (!els.raw.value.trim()) {
+      els.raw.value = inferScanPrompt(pageContext);
+      refreshDetected();
+    }
+    setStatus('Page context attached.', 'ok');
+  } catch (e) {
+    setStatus(e.message || 'Could not scan this page.', 'err');
+  }
+}
+
+function inferScanPrompt(ctx) {
+  const host = ctx?.host || '';
+  if (/mail\.google\.com|outlook\.live\.com|outlook\.office\.com|teams\.microsoft\.com|slack\.com/.test(host)) {
+    return 'Help me write a clear, professional reply based on the scanned page context.';
+  }
+  if (/chatgpt\.com|claude\.ai|gemini\.google\.com|perplexity\.ai|grok\.com/.test(host)) {
+    return 'Help me respond to this conversation based on the scanned page context.';
+  }
+  return 'Help me understand this page and write the best response or next prompt.';
+}
+
+function renderPageContext() {
+  if (!pageContext) {
+    els.pageContext.hidden = true;
+    els.pageContextText.textContent = '';
+    return;
+  }
+  const label = pageContext.title || pageContext.host || 'scanned page';
+  const count = pageContext.text ? `${Math.round(pageContext.text.length / 100) / 10}k chars` : 'no text';
+  els.pageContextText.textContent = `Page: ${label} · ${count}`;
+  els.pageContext.hidden = false;
+}
+
+function clearPageContext(opts = {}) {
+  pageContext = null;
+  renderPageContext();
+  refreshDetected();
+  if (!opts.silent) setStatus('Page context cleared.', 'ok');
+}
+
 async function prepareImage(file) {
   if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
     throw new Error(`${file.name} is not a supported image type.`);
@@ -603,6 +665,9 @@ function renderAttachedImages() {
 function formatOriginalInput(payload) {
   const names = (payload.images || []).map((img) => `- ${img.name} (${img.width}x${img.height})`);
   const blocks = [payload.rawInput];
+  if (payload.pageContext?.text) {
+    blocks.push(`Scanned page:\n${payload.pageContext.title || payload.pageContext.url || 'current page'}\n${payload.pageContext.text}`);
+  }
   if (payload.threadContext?.optimized || payload.threadContext?.raw) {
     blocks.push(`Continuing from:\n${payload.threadContext.optimized || payload.threadContext.raw}`);
   }
@@ -620,6 +685,18 @@ function serializeThreadContext(ctx) {
     targetAi: ctx.targetAi || '',
     profileName: ctx.profileName || '',
     ts: ctx.ts || null,
+  };
+}
+
+function serializePageContext(ctx) {
+  if (!ctx?.text) return null;
+  return {
+    title: trimForPayload(ctx.title, 300),
+    url: trimForPayload(ctx.url, 500),
+    host: trimForPayload(ctx.host, 120),
+    selection: trimForPayload(ctx.selection, 3000),
+    text: trimForPayload(ctx.text, 12000),
+    capturedAt: ctx.capturedAt || Date.now(),
   };
 }
 

@@ -37,14 +37,25 @@ async function init() {
 
 async function loadTemplates() {
   const pack = await getActivePack();
-  const lib = pack?.role_library || {};
-  cachedTemplates = lib;
+  const profileTemplates = isPlainObject(pack?.profile_templates) ? pack.profile_templates : {};
+  const roleLibrary = isPlainObject(pack?.role_library) ? pack.role_library : {};
+  cachedTemplates = {};
   const sel = $('p-template');
   // Reset to just the "blank" sentinel
   sel.innerHTML = '<option value="">— blank —</option>';
-  const entries = Object.entries(lib);
-  if (!entries.length) return;
-  for (const [key, value] of entries) {
+
+  for (const [key, value] of Object.entries(profileTemplates)) {
+    cachedTemplates[key] = { type: 'profile', value };
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = value?.name || humanizeKey(key);
+    opt.title = String(value?.notes || value?.customSystemPrompt || value?.role || '').slice(0, 240);
+    sel.appendChild(opt);
+  }
+
+  for (const [key, value] of Object.entries(roleLibrary)) {
+    if (cachedTemplates[key]) continue;
+    cachedTemplates[key] = { type: 'role', value };
     const opt = document.createElement('option');
     opt.value = key;
     opt.textContent = humanizeKey(key);
@@ -60,19 +71,56 @@ function humanizeKey(k) {
 function onTemplateChange() {
   const key = $('p-template').value;
   if (!key) return;
-  const description = cachedTemplates[key];
-  if (!description) return;
-  // Pre-fill role + voice + notes from the template. Don't clobber non-empty fields.
-  if (!$('p-role').value.trim()) $('p-role').value = humanizeKey(key);
-  if (!$('p-voice').value.trim()) {
-    // Strip the leading "Role description starts with..." — keep the descriptive tail as voice cue.
-    $('p-voice').value = String(description).split('. ').slice(0, 2).join('. ');
+  const template = normalizeTemplate(cachedTemplates[key], key);
+  if (!template) return;
+
+  if (template.type === 'profile') {
+    applyProfileTemplate(template.value, key);
+  } else {
+    applyRoleTemplate(template.value, key);
   }
-  if (!$('p-notes').value.trim()) {
-    $('p-notes').value = description;
-  }
-  if (!$('p-name').value.trim()) $('p-name').value = humanizeKey(key);
   setBanner(`Template "${humanizeKey(key)}" applied. Edit any field to customize.`, 'ok');
+}
+
+function normalizeTemplate(raw, key) {
+  if (!raw) return null;
+  if (typeof raw === 'string') return { type: 'role', value: raw };
+  if (raw.type === 'profile' && isPlainObject(raw.value)) return raw;
+  if (raw.type === 'role') return raw;
+  if (isPlainObject(raw)) return { type: 'profile', value: raw };
+  console.warn('Unsupported template:', key, raw);
+  return null;
+}
+
+function applyProfileTemplate(t, key) {
+  setIfBlank('p-name', t.name || humanizeKey(key));
+  setIfBlank('p-role', t.role);
+  setIfBlank('p-business', t.business);
+  setIfBlank('p-audience', t.audience);
+  setIfBlank('p-voice', t.voice);
+  setIfBlank('p-must', t.mustInclude);
+  setIfBlank('p-avoid', t.mustAvoid);
+  setIfBlank('p-sig', t.signature);
+  setIfBlank('p-notes', t.notes);
+  setIfBlank('p-custom', t.customSystemPrompt);
+}
+
+function applyRoleTemplate(description, key) {
+  // Pre-fill role + voice + notes from the template. Don't clobber non-empty fields.
+  setIfBlank('p-name', humanizeKey(key));
+  setIfBlank('p-role', humanizeKey(key));
+  setIfBlank('p-voice', String(description).split('. ').slice(0, 2).join('. '));
+  setIfBlank('p-notes', description);
+}
+
+function setIfBlank(id, value) {
+  if (value == null || value === '') return;
+  const el = $(id);
+  if (el && !el.value.trim()) el.value = String(value);
+}
+
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
 }
 
 async function onSaveKey() {

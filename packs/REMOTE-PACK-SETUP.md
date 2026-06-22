@@ -45,6 +45,7 @@ Recommended fields (all optional except `version`):
 | `image_styles` | object | named style packs — see schema below |
 | `image_quality_boosters` | string[] | tokens always layered into image prompts |
 | `image_negative_defaults` | string[] | default negative tokens for SD/MJ |
+| `profile_templates` | object | rich profile templates that prefill profile fields |
 | `role_library` | object | named role templates the model can adopt |
 
 ### Image style schema
@@ -65,6 +66,29 @@ Each entry in `image_styles` can be a **string** (legacy, one-liner) OR a **stru
 
 The optimizer layers these into the final image-gen prompt so the model gets actual structured tokens to work with, not just a vibe word.
 
+### Profile template schema
+
+Use `profile_templates` when a template should prefill the full profile editor:
+
+```json
+"profile_templates": {
+  "true-color-graphic-designer": {
+    "name": "True Color Graphic Designer",
+    "role": "Graphic designer and customer support assistant",
+    "business": "True Color Display Printing Ltd.",
+    "audience": "Local Saskatoon print customers",
+    "voice": "Friendly, practical, clear, local",
+    "mustInclude": "Product, size, quantity, deadline, file requirements",
+    "mustAvoid": "Invented prices, fake QR codes, impossible turnaround promises",
+    "signature": "True Color Display Printing",
+    "notes": "Use for customer replies and print design prompts.",
+    "customSystemPrompt": "Profile-specific optimizer instructions."
+  }
+}
+```
+
+All fields are optional. The settings page fills only blank fields, so users can apply a template without clobbering existing edits.
+
 ### Role library schema
 
 ```json
@@ -77,6 +101,8 @@ Role descriptions should:
 - name the domain + years of experience
 - name a specific constraint or value (what they care about, what they refuse to do)
 - be 1-3 sentences max
+
+Keep a matching `role_library` entry for important `profile_templates` when you want older extension builds to have a simple fallback.
 
 ## Cache + TTL
 

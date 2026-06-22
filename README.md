@@ -50,6 +50,13 @@ That's it. You're set.
 - PromptForge sends the reference image to the optimizer model and returns a clean image-editing prompt for ChatGPT image generation or another vision-capable image model
 - Images are not saved to history; history keeps only the text request plus file names/dimensions
 
+### Continuing an image iteration
+- After optimizing a prompt, click **Continue** to use that optimized prompt as context for the next revision
+- Or open **History** → click **Continue** on an older prompt
+- Attach the latest generated image from ChatGPT and type the next change, e.g. "make the frog face happier, keep the bike angle, remove the extra handlebar"
+- PromptForge sends the previous prompt context + latest image + new instruction, so the next prompt stays on track
+- Click **Clear all** in History to wipe saved prompt history, or clear the continuation chip to stop using the previous prompt
+
 ### Categories — what changes
 | Category | What the optimizer does |
 |---|---|

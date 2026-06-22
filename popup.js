@@ -9,6 +9,9 @@ const els = {
   category: $('pf-category'),
   target: $('pf-target'),
   raw: $('pf-raw'),
+  threadContext: $('pf-thread-context'),
+  threadContextText: $('pf-thread-context-text'),
+  clearThread: $('pf-clear-thread'),
   imageInput: $('pf-image-input'),
   attachImage: $('pf-attach-image'),
   imageList: $('pf-image-list'),
@@ -21,6 +24,7 @@ const els = {
   meta: $('pf-meta'),
   copy: $('pf-copy'),
   inject: $('pf-inject'),
+  continue: $('pf-continue'),
   regenerate: $('pf-regenerate'),
   status: $('pf-status'),
   openOptions: $('pf-open-options'),
@@ -43,6 +47,7 @@ let lastRequest = null;
 let lastResult = null;
 let activePort = null;
 let attachedImages = [];
+let threadContext = null;
 
 const MAX_IMAGES = 3;
 const MAX_IMAGE_DIMENSION = 1600;
@@ -68,6 +73,7 @@ async function init() {
   detectedTarget = detectTargetAi(tab?.url ? new URL(tab.url).hostname : '');
 
   els.raw.addEventListener('input', refreshDetected);
+  els.clearThread.addEventListener('click', clearThreadContext);
   els.attachImage.addEventListener('click', () => els.imageInput.click());
   els.imageInput.addEventListener('change', onImageInputChange);
   els.profile.addEventListener('change', onProfileChange);
@@ -77,6 +83,9 @@ async function init() {
   els.clear.addEventListener('click', onClear);
   els.copy.addEventListener('click', onCopy);
   els.inject.addEventListener('click', onInject);
+  els.continue.addEventListener('click', () => {
+    if (lastResult) startContinuation(lastResult);
+  });
   els.regenerate.addEventListener('click', onRegenerate);
   els.openOptions.addEventListener('click', () => chrome.runtime.openOptionsPage());
   els.toggleHistory.addEventListener('click', toggleHistory);
@@ -159,9 +168,10 @@ function refreshDetected() {
   lockModeForImageGen(isImage);
   const effectiveMode = isImage ? 'deep (forced — image-gen)' : mode;
   const imageStamp = attachedImages.length ? ` · ${attachedImages.length} image${attachedImages.length === 1 ? '' : 's'}` : '';
+  const threadStamp = threadContext ? ' · continuing' : '';
   els.detected.textContent = els.raw.value.trim()
-    ? `Detected: ${detectedCategory} · target: ${effectiveTgt} · using: ${effectiveCat} · mode: ${effectiveMode}${imageStamp}`
-    : `Auto-detect ready · target: ${effectiveTgt} · mode: ${effectiveMode}${imageStamp}`;
+    ? `Detected: ${detectedCategory} · target: ${effectiveTgt} · using: ${effectiveCat} · mode: ${effectiveMode}${imageStamp}${threadStamp}`
+    : `Auto-detect ready · target: ${effectiveTgt} · mode: ${effectiveMode}${imageStamp}${threadStamp}`;
 }
 
 function normalizeImageCategory(category) {
@@ -216,6 +226,7 @@ async function onOptimize() {
     targetAi,
     mode,
     images: attachedImages.map(({ id: _id, previewUrl: _previewUrl, ...rest }) => rest),
+    threadContext: serializeThreadContext(threadContext),
   };
   await runOptimize(lastRequest, 'Optimizing…');
 }
@@ -299,7 +310,8 @@ function formatMetaHtml(r) {
   const lines = [];
   const m = (r.model || '').replace(/^anthropic\//, '').replace(/^openai\//, '').replace(/^google\//, '').replace(/^meta-llama\//, '');
   const img = r.imageCount ? ` · ${r.imageCount} img` : '';
-  lines.push(`${m} · ${r.mode || 'sharpen'} · ${r.category}${r.targetAi ? ' → ' + r.targetAi : ''}${img}`);
+  const cont = r.continuedFrom ? ' · continued' : '';
+  lines.push(`${m} · ${r.mode || 'sharpen'} · ${r.category}${r.targetAi ? ' → ' + r.targetAi : ''}${img}${cont}`);
   const tok = r.usage?.total_tokens || (r.usage?.prompt_tokens || 0) + (r.usage?.completion_tokens || 0);
   const cost = r.costUsd != null ? `$${r.costUsd.toFixed(4)}` : '—';
   lines.push(`${tok || '?'} tok · ${cost} · pack ${r.packVersion}`);
@@ -318,6 +330,7 @@ function switchTab(tab) {
 
 function onClear() {
   els.raw.value = '';
+  clearThreadContext({ silent: true });
   attachedImages = [];
   renderAttachedImages();
   els.result.value = '';
@@ -384,14 +397,27 @@ async function renderHistory() {
     li.innerHTML = `
       <div class="pf-history-snippet">${escapeHtml(snippet || '(empty)')}</div>
       <div class="pf-history-meta">${when} · ${escapeHtml(item.category || '?')} · ${escapeHtml(item.mode || 'sharpen')} · ${escapeHtml(item.profileName || '?')}</div>
+      <div class="pf-history-actions">
+        <button type="button" data-act="load">Load</button>
+        <button type="button" data-act="continue">Continue</button>
+      </div>
     `;
     li.addEventListener('click', () => loadHistoryEntry(item));
+    li.querySelector('[data-act="load"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      loadHistoryEntry(item);
+    });
+    li.querySelector('[data-act="continue"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      startContinuation(item);
+    });
     els.historyList.appendChild(li);
   }
 }
 
 function loadHistoryEntry(item) {
   els.raw.value = item.raw || '';
+  clearThreadContext({ silent: true });
   attachedImages = [];
   renderAttachedImages();
   els.category.value = 'auto';
@@ -406,10 +432,57 @@ function loadHistoryEntry(item) {
   setStatus('Loaded from history.', 'ok');
 }
 
+function startContinuation(item) {
+  threadContext = {
+    id: item.id || '',
+    raw: item.raw || '',
+    optimized: item.optimized || '',
+    category: item.category || 'image-edit',
+    targetAi: item.targetAi || 'chatgpt',
+    profileName: item.profileName || '',
+    ts: item.ts || Date.now(),
+  };
+  renderThreadContext();
+
+  els.raw.value = '';
+  els.category.value = item.category === 'image-gen' ? 'image-edit' : (item.category || 'image-edit');
+  els.target.value = item.targetAi || 'chatgpt';
+  if (item.mode === 'sharpen' || item.mode === 'deep') {
+    mode = item.mode;
+    setModeUi(mode);
+  }
+  attachedImages = [];
+  renderAttachedImages();
+  els.historyPanel.hidden = true;
+  refreshDetected();
+  setStatus('Continuation started. Add the latest output image and type the next change.', 'ok');
+  els.raw.focus();
+}
+
+function renderThreadContext() {
+  if (!threadContext) {
+    els.threadContext.hidden = true;
+    els.threadContextText.textContent = '';
+    return;
+  }
+  const snippet = (threadContext.optimized || threadContext.raw || '').replace(/\s+/g, ' ').slice(0, 96);
+  els.threadContextText.textContent = `Continuing from: ${snippet || 'previous prompt'}`;
+  els.threadContext.hidden = false;
+}
+
+function clearThreadContext(opts = {}) {
+  threadContext = null;
+  renderThreadContext();
+  refreshDetected();
+  if (!opts.silent) setStatus('Continuation cleared.', 'ok');
+}
+
 async function onClearHistory() {
   if (!confirm('Clear all history?')) return;
   await clearHistory();
+  clearThreadContext({ silent: true });
   await renderHistory();
+  refreshDetected();
 }
 
 function relativeTime(ts) {
@@ -529,7 +602,30 @@ function renderAttachedImages() {
 
 function formatOriginalInput(payload) {
   const names = (payload.images || []).map((img) => `- ${img.name} (${img.width}x${img.height})`);
-  return names.length ? `${payload.rawInput}\n\nAttached images:\n${names.join('\n')}` : payload.rawInput;
+  const blocks = [payload.rawInput];
+  if (payload.threadContext?.optimized || payload.threadContext?.raw) {
+    blocks.push(`Continuing from:\n${payload.threadContext.optimized || payload.threadContext.raw}`);
+  }
+  if (names.length) blocks.push(`Attached images:\n${names.join('\n')}`);
+  return blocks.join('\n\n');
+}
+
+function serializeThreadContext(ctx) {
+  if (!ctx) return null;
+  return {
+    id: ctx.id || '',
+    raw: trimForPayload(ctx.raw, 5000),
+    optimized: trimForPayload(ctx.optimized, 5000),
+    category: ctx.category || '',
+    targetAi: ctx.targetAi || '',
+    profileName: ctx.profileName || '',
+    ts: ctx.ts || null,
+  };
+}
+
+function trimForPayload(text, max) {
+  const s = String(text || '');
+  return s.length > max ? s.slice(0, max) + '\n[truncated]' : s;
 }
 
 async function getActiveTab() {

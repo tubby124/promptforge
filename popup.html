@@ -71,6 +71,10 @@
 
   <section class="pf-input">
     <label for="pf-raw">Paste your rough prompt</label>
+    <div id="pf-thread-context" class="pf-thread-context" hidden>
+      <span id="pf-thread-context-text"></span>
+      <button id="pf-clear-thread" type="button" aria-label="Clear continuation context">×</button>
+    </div>
     <textarea id="pf-raw" rows="6" placeholder="e.g. make this banner image cleaner, change the red to True Color blue, and resize for 4x8 ft print"></textarea>
     <div class="pf-attachments">
       <input id="pf-image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden />
@@ -98,6 +102,7 @@
     <div class="pf-actions">
       <button id="pf-copy" class="pf-primary">Copy</button>
       <button id="pf-inject" class="pf-secondary">Inject into page</button>
+      <button id="pf-continue" class="pf-secondary" title="Use this optimized prompt as context for the next revision">Continue</button>
       <button id="pf-regenerate" class="pf-secondary" title="Run again (same input, same settings)">↻ Regenerate</button>
     </div>
     <details class="pf-debug">

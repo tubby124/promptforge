@@ -98,7 +98,7 @@ function safePost(port, msg) {
 }
 
 async function streamOptimize(payload, port, isAborted) {
-  const { rawInput, profileId, category, targetAi, mode, images = [] } = payload || {};
+  const { rawInput, profileId, category, targetAi, mode, images = [], threadContext = null } = payload || {};
   const { openrouterKey, model } = await chrome.storage.local.get(['openrouterKey', 'model']);
   if (!openrouterKey) throw new Error('Set your OpenRouter API key in PromptForge Settings first.');
 
@@ -118,7 +118,7 @@ async function streamOptimize(payload, port, isAborted) {
     stream: true,
     messages: [
       { role: 'system', content: system },
-      { role: 'user', content: buildUserMessageContent(rawInput, images) },
+      { role: 'user', content: buildUserMessageContent(rawInput, images, threadContext) },
     ],
   };
 
@@ -147,6 +147,7 @@ async function streamOptimize(payload, port, isAborted) {
     targetAi,
     imageCount: images.length,
     imageNames: images.map((img) => img.name).filter(Boolean),
+    continuedFrom: summarizeThreadContext(threadContext),
     mode: effectiveMode,
     systemPrompt: system,
   };
@@ -155,16 +156,11 @@ async function streamOptimize(payload, port, isAborted) {
   safePost(port, { type: 'done', result });
 }
 
-function buildUserMessageContent(rawInput, images) {
+function buildUserMessageContent(rawInput, images, threadContext) {
   const validImages = normalizeImages(images);
-  if (!validImages.length) return rawInput;
+  const text = buildUserText(rawInput, validImages, threadContext);
+  if (!validImages.length) return text;
 
-  const text = [
-    rawInput,
-    '',
-    `Attached reference image${validImages.length === 1 ? '' : 's'}:`,
-    ...validImages.map((img, i) => `${i + 1}. ${img.name || 'image'} (${img.width || '?'}x${img.height || '?'}). Use this visual reference when optimizing the prompt.`),
-  ].join('\n');
 
   return [
     { type: 'text', text },
@@ -173,6 +169,30 @@ function buildUserMessageContent(rawInput, images) {
       image_url: { url: img.dataUrl },
     })),
   ];
+}
+
+function buildUserText(rawInput, images, threadContext) {
+  const blocks = [];
+  const ctx = normalizeThreadContext(threadContext);
+  if (ctx) {
+    blocks.push([
+      'Continuation context:',
+      ctx.optimized ? `Previous optimized prompt:\n${ctx.optimized}` : '',
+      ctx.raw ? `Previous raw request:\n${ctx.raw}` : '',
+      'The user is now asking for the next revision. Preserve the useful intent from the previous prompt, but prioritize the new instruction below.',
+    ].filter(Boolean).join('\n\n'));
+  }
+
+  blocks.push(`New instruction:\n${rawInput}`);
+
+  if (images.length) {
+    blocks.push([
+      `Attached latest/reference image${images.length === 1 ? '' : 's'}:`,
+      ...images.map((img, i) => `${i + 1}. ${img.name || 'image'} (${img.width || '?'}x${img.height || '?'}). Use this visual reference when optimizing the next prompt.`),
+    ].join('\n'));
+  }
+
+  return blocks.join('\n\n');
 }
 
 function normalizeImages(images) {
@@ -187,6 +207,34 @@ function formatRawForHistory(rawInput, images) {
   if (!validImages.length) return rawInput;
   const names = validImages.map((img) => `- ${img.name || 'image'} (${img.width || '?'}x${img.height || '?'})`);
   return `${rawInput}\n\nAttached reference images:\n${names.join('\n')}`;
+}
+
+function normalizeThreadContext(threadContext) {
+  if (!threadContext || typeof threadContext !== 'object') return null;
+  const raw = cleanContextText(threadContext.raw);
+  const optimized = cleanContextText(threadContext.optimized);
+  if (!raw && !optimized) return null;
+  return {
+    id: String(threadContext.id || ''),
+    raw,
+    optimized,
+    category: String(threadContext.category || ''),
+    targetAi: String(threadContext.targetAi || ''),
+  };
+}
+
+function cleanContextText(text) {
+  return String(text || '').trim().slice(0, 5000);
+}
+
+function summarizeThreadContext(threadContext) {
+  const ctx = normalizeThreadContext(threadContext);
+  if (!ctx) return null;
+  return {
+    id: ctx.id,
+    category: ctx.category,
+    targetAi: ctx.targetAi,
+  };
 }
 
 async function fetchWithBackoff({ url, key, body, port, isAborted }) {

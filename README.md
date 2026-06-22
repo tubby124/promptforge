@@ -43,11 +43,19 @@ That's it. You're set.
 - Click it → opens the optimizer with whatever you typed already pre-filled
 - Or use the keyboard shortcut: **Cmd+Shift+O** (Mac) / **Ctrl+Shift+O** (Win/Linux)
 
+### Working from an image
+- Click **Add image** in the popup and attach up to 3 PNG/JPG/WebP reference images
+- Type what you want changed, e.g. "resize this for a 4x8 ft banner, change the red to True Color blue, keep the logo sharp"
+- Leave Category on Auto or choose **Image edit / resize**
+- PromptForge sends the reference image to the optimizer model and returns a clean image-editing prompt for ChatGPT image generation or another vision-capable image model
+- Images are not saved to history; history keeps only the text request plus file names/dimensions
+
 ### Categories — what changes
 | Category | What the optimizer does |
 |---|---|
 | **email** | Returns a send-ready email with subject line, body, and your saved signature. No commentary. |
 | **image-gen** | Returns a single dense prompt with subject + composition + camera/lens + lighting + style + quality tokens. Ready for Midjourney/DALL-E/Sora/Stable Diffusion. |
+| **image-edit** | Returns a precise edit prompt based on attached reference image(s): what to change, what to preserve, output size, colour/file constraints, and proof checks. |
 | **code** | Returns a precise technical request with stack, constraints, expected interface, deliverable definition. |
 | **marketing** | Audience + channel + hook + CTA + voice + anti-pattern guardrails. |
 | **research** | Scope + source preferences + depth + output structure + citation requirements. |

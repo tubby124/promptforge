@@ -92,6 +92,69 @@ body { padding: 12px 14px 14px; }
   outline: none; border-color: var(--accent-2);
 }
 .pf-input { margin-bottom: 8px; }
+.pf-attachments {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: start;
+  margin-top: 8px;
+}
+.pf-attach-btn {
+  flex: 0 0 auto;
+  min-height: 34px;
+  white-space: nowrap;
+}
+.pf-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 34px;
+}
+.pf-image-chip {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 280px;
+  min-height: 34px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+}
+.pf-image-chip img {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+.pf-image-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text);
+}
+.pf-image-chip small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.pf-image-chip button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+.pf-image-chip button:hover { color: var(--text); }
 .pf-tag {
   font-size: 11px; color: var(--muted); margin-top: 4px; min-height: 14px;
 }

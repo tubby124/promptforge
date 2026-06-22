@@ -9,6 +9,9 @@ const els = {
   category: $('pf-category'),
   target: $('pf-target'),
   raw: $('pf-raw'),
+  imageInput: $('pf-image-input'),
+  attachImage: $('pf-attach-image'),
+  imageList: $('pf-image-list'),
   detected: $('pf-detected'),
   optimize: $('pf-optimize'),
   clear: $('pf-clear'),
@@ -39,6 +42,11 @@ let mode = 'sharpen';
 let lastRequest = null;
 let lastResult = null;
 let activePort = null;
+let attachedImages = [];
+
+const MAX_IMAGES = 3;
+const MAX_IMAGE_DIMENSION = 1600;
+const JPEG_QUALITY = 0.86;
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -60,6 +68,8 @@ async function init() {
   detectedTarget = detectTargetAi(tab?.url ? new URL(tab.url).hostname : '');
 
   els.raw.addEventListener('input', refreshDetected);
+  els.attachImage.addEventListener('click', () => els.imageInput.click());
+  els.imageInput.addEventListener('change', onImageInputChange);
   els.profile.addEventListener('change', onProfileChange);
   els.category.addEventListener('change', refreshDetected);
   els.target.addEventListener('change', refreshDetected);
@@ -130,8 +140,8 @@ function lockModeForImageGen(isImage) {
   // Image-gen always uses deep regardless of toggle — show the lock visually.
   els.modeSharpen.classList.toggle('pf-mode-locked', isImage);
   if (isImage) {
-    els.modeSharpen.title = 'Image-gen always uses Deep (structured tokens are the whole point).';
-    els.modeDeep.title = 'Image-gen always uses Deep.';
+    els.modeSharpen.title = 'Image work always uses Deep (structured visual tokens are the whole point).';
+    els.modeDeep.title = 'Image work always uses Deep.';
   } else {
     els.modeSharpen.title = 'Light pass — preserves voice and length. Default.';
     els.modeDeep.title = 'Full Lyra-4D heavyweight pass. Structured sections, role, output spec.';
@@ -141,14 +151,21 @@ function lockModeForImageGen(isImage) {
 function refreshDetected() {
   detectedCategory = categorize(els.raw.value);
   const catSel = els.category.value;
-  const effectiveCat = catSel === 'auto' ? detectedCategory : catSel;
+  const effectiveCat = catSel === 'auto'
+    ? (attachedImages.length ? normalizeImageCategory(detectedCategory) : detectedCategory)
+    : catSel;
   const effectiveTgt = els.target.value === 'auto' ? detectedTarget : els.target.value;
-  const isImage = effectiveCat === 'image-gen';
+  const isImage = effectiveCat === 'image-gen' || effectiveCat === 'image-edit';
   lockModeForImageGen(isImage);
   const effectiveMode = isImage ? 'deep (forced — image-gen)' : mode;
+  const imageStamp = attachedImages.length ? ` · ${attachedImages.length} image${attachedImages.length === 1 ? '' : 's'}` : '';
   els.detected.textContent = els.raw.value.trim()
-    ? `Detected: ${detectedCategory} · target: ${effectiveTgt} · using: ${effectiveCat} · mode: ${effectiveMode}`
-    : `Auto-detect ready · target: ${effectiveTgt} · mode: ${effectiveMode}`;
+    ? `Detected: ${detectedCategory} · target: ${effectiveTgt} · using: ${effectiveCat} · mode: ${effectiveMode}${imageStamp}`
+    : `Auto-detect ready · target: ${effectiveTgt} · mode: ${effectiveMode}${imageStamp}`;
+}
+
+function normalizeImageCategory(category) {
+  return category === 'email' ? 'email' : (category === 'image-gen' ? 'image-edit' : 'image-edit');
 }
 
 async function refreshReadiness() {
@@ -183,14 +200,23 @@ function hideSetupWarning() {
 async function onOptimize() {
   const rawInput = els.raw.value.trim();
   if (!rawInput) {
-    setStatus('Paste something to optimize first.', 'warn');
+    setStatus(attachedImages.length ? 'Tell me what to change about the image first.' : 'Paste something to optimize first.', 'warn');
     return;
   }
   const catSel = els.category.value;
-  const category = catSel === 'auto' ? detectedCategory : catSel;
+  const category = catSel === 'auto'
+    ? (attachedImages.length ? normalizeImageCategory(detectedCategory) : detectedCategory)
+    : catSel;
   const targetAi = els.target.value === 'auto' ? detectedTarget : els.target.value;
 
-  lastRequest = { rawInput, profileId: els.profile.value, category, targetAi, mode };
+  lastRequest = {
+    rawInput,
+    profileId: els.profile.value,
+    category,
+    targetAi,
+    mode,
+    images: attachedImages.map(({ id: _id, previewUrl: _previewUrl, ...rest }) => rest),
+  };
   await runOptimize(lastRequest, 'Optimizing…');
 }
 
@@ -204,7 +230,7 @@ async function runOptimize(payload, statusMsg) {
   setStatus(statusMsg);
   els.outputSection.hidden = false;
   els.result.value = '';
-  els.original.value = payload.rawInput;
+  els.original.value = formatOriginalInput(payload);
   els.meta.innerHTML = '';
   els.debugSystem.textContent = '';
   switchTab('optimized');
@@ -218,6 +244,7 @@ async function runOptimize(payload, statusMsg) {
     const port = chrome.runtime.connect({ name: 'PF_OPTIMIZE' });
     activePort = port;
     let streamed = '';
+    let completed = false;
 
     await new Promise((resolve, reject) => {
       const onMsg = (msg) => {
@@ -228,6 +255,7 @@ async function runOptimize(payload, statusMsg) {
           lastResult = msg.result;
           renderResult(msg.result);
           setStatus('Done.', 'ok');
+          completed = true;
           resolve();
         } else if (msg.type === 'error') {
           reject(new Error(msg.error || 'Unknown error'));
@@ -237,7 +265,7 @@ async function runOptimize(payload, statusMsg) {
       };
       port.onMessage.addListener(onMsg);
       port.onDisconnect.addListener(() => {
-        if (!lastResult || lastResult.raw !== payload.rawInput) {
+        if (!completed) {
           reject(new Error(chrome.runtime.lastError?.message || 'Stream disconnected'));
         }
       });
@@ -270,7 +298,8 @@ function renderResult(result) {
 function formatMetaHtml(r) {
   const lines = [];
   const m = (r.model || '').replace(/^anthropic\//, '').replace(/^openai\//, '').replace(/^google\//, '').replace(/^meta-llama\//, '');
-  lines.push(`${m} · ${r.mode || 'sharpen'} · ${r.category}${r.targetAi ? ' → ' + r.targetAi : ''}`);
+  const img = r.imageCount ? ` · ${r.imageCount} img` : '';
+  lines.push(`${m} · ${r.mode || 'sharpen'} · ${r.category}${r.targetAi ? ' → ' + r.targetAi : ''}${img}`);
   const tok = r.usage?.total_tokens || (r.usage?.prompt_tokens || 0) + (r.usage?.completion_tokens || 0);
   const cost = r.costUsd != null ? `$${r.costUsd.toFixed(4)}` : '—';
   lines.push(`${tok || '?'} tok · ${cost} · pack ${r.packVersion}`);
@@ -289,6 +318,8 @@ function switchTab(tab) {
 
 function onClear() {
   els.raw.value = '';
+  attachedImages = [];
+  renderAttachedImages();
   els.result.value = '';
   els.original.value = '';
   els.outputSection.hidden = true;
@@ -361,6 +392,8 @@ async function renderHistory() {
 
 function loadHistoryEntry(item) {
   els.raw.value = item.raw || '';
+  attachedImages = [];
+  renderAttachedImages();
   els.category.value = 'auto';
   els.target.value = 'auto';
   if (item.mode === 'sharpen' || item.mode === 'deep') {
@@ -393,6 +426,110 @@ function relativeTime(ts) {
 function setStatus(msg, kind = '') {
   els.status.textContent = msg || '';
   els.status.className = `pf-status ${kind}`;
+}
+
+async function onImageInputChange(ev) {
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if (!files.length) return;
+
+  const room = MAX_IMAGES - attachedImages.length;
+  if (room <= 0) {
+    setStatus(`Max ${MAX_IMAGES} images per prompt.`, 'warn');
+    return;
+  }
+
+  setStatus('Preparing image…');
+  const selected = files.slice(0, room);
+  let added = 0;
+  for (const file of selected) {
+    try {
+      const image = await prepareImage(file);
+      attachedImages.push(image);
+      added++;
+    } catch (e) {
+      setStatus(e.message || `Could not read ${file.name}.`, 'err');
+      break;
+    }
+  }
+  renderAttachedImages();
+  refreshDetected();
+  if (files.length > selected.length) {
+    setStatus(`Added ${added}; max ${MAX_IMAGES} images per prompt.`, 'warn');
+  } else {
+    setStatus(added ? `Added ${added} image${added === 1 ? '' : 's'}.` : '', added ? 'ok' : '');
+  }
+}
+
+async function prepareImage(file) {
+  if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+    throw new Error(`${file.name} is not a supported image type.`);
+  }
+
+  const bitmap = await loadBitmap(file);
+  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(bitmap.naturalWidth, bitmap.naturalHeight));
+  const width = Math.max(1, Math.round(bitmap.naturalWidth * scale));
+  const height = Math.max(1, Math.round(bitmap.naturalHeight * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  URL.revokeObjectURL(bitmap.src);
+
+  const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+  const approxBytes = Math.round((dataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: file.name,
+    type: 'image/jpeg',
+    originalType: file.type,
+    originalSize: file.size,
+    size: approxBytes,
+    width,
+    height,
+    dataUrl,
+    previewUrl: dataUrl,
+  };
+}
+
+function loadBitmap(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error(`Could not read ${file.name}.`));
+    };
+    img.src = url;
+  });
+}
+
+function renderAttachedImages() {
+  els.imageList.innerHTML = '';
+  els.attachImage.disabled = attachedImages.length >= MAX_IMAGES;
+  for (const image of attachedImages) {
+    const item = document.createElement('div');
+    item.className = 'pf-image-chip';
+    item.innerHTML = `
+      <img src="${image.previewUrl}" alt="">
+      <span>${escapeHtml(image.name)}<small>${image.width}×${image.height}</small></span>
+      <button type="button" aria-label="Remove ${escapeHtml(image.name)}" data-id="${image.id}">×</button>
+    `;
+    item.querySelector('button').addEventListener('click', () => {
+      attachedImages = attachedImages.filter((x) => x.id !== image.id);
+      renderAttachedImages();
+      refreshDetected();
+      setStatus('Image removed.', 'ok');
+    });
+    els.imageList.appendChild(item);
+  }
+}
+
+function formatOriginalInput(payload) {
+  const names = (payload.images || []).map((img) => `- ${img.name} (${img.width}x${img.height})`);
+  return names.length ? `${payload.rawInput}\n\nAttached images:\n${names.join('\n')}` : payload.rawInput;
 }
 
 async function getActiveTab() {

@@ -98,7 +98,7 @@ function safePost(port, msg) {
 }
 
 async function streamOptimize(payload, port, isAborted) {
-  const { rawInput, profileId, category, targetAi, mode } = payload || {};
+  const { rawInput, profileId, category, targetAi, mode, images = [] } = payload || {};
   const { openrouterKey, model } = await chrome.storage.local.get(['openrouterKey', 'model']);
   if (!openrouterKey) throw new Error('Set your OpenRouter API key in PromptForge Settings first.');
 
@@ -118,7 +118,7 @@ async function streamOptimize(payload, port, isAborted) {
     stream: true,
     messages: [
       { role: 'system', content: system },
-      { role: 'user', content: rawInput },
+      { role: 'user', content: buildUserMessageContent(rawInput, images) },
     ],
   };
 
@@ -136,7 +136,7 @@ async function streamOptimize(payload, port, isAborted) {
   const costUsd = estimateCost(finalModel || usedModel, usage, pack);
   const result = {
     optimized: text,
-    raw: rawInput,
+    raw: formatRawForHistory(rawInput, images),
     usage,
     costUsd,
     model: finalModel || usedModel,
@@ -145,12 +145,48 @@ async function streamOptimize(payload, port, isAborted) {
     profileName: profile?.name || 'default',
     category,
     targetAi,
+    imageCount: images.length,
+    imageNames: images.map((img) => img.name).filter(Boolean),
     mode: effectiveMode,
     systemPrompt: system,
   };
 
   pushHistory(result).catch((e) => console.warn('[PromptForge] history save failed:', e));
   safePost(port, { type: 'done', result });
+}
+
+function buildUserMessageContent(rawInput, images) {
+  const validImages = normalizeImages(images);
+  if (!validImages.length) return rawInput;
+
+  const text = [
+    rawInput,
+    '',
+    `Attached reference image${validImages.length === 1 ? '' : 's'}:`,
+    ...validImages.map((img, i) => `${i + 1}. ${img.name || 'image'} (${img.width || '?'}x${img.height || '?'}). Use this visual reference when optimizing the prompt.`),
+  ].join('\n');
+
+  return [
+    { type: 'text', text },
+    ...validImages.map((img) => ({
+      type: 'image_url',
+      image_url: { url: img.dataUrl },
+    })),
+  ];
+}
+
+function normalizeImages(images) {
+  if (!Array.isArray(images)) return [];
+  return images
+    .filter((img) => img?.dataUrl && /^data:image\/(png|jpeg|jpg|webp);base64,/.test(img.dataUrl))
+    .slice(0, 3);
+}
+
+function formatRawForHistory(rawInput, images) {
+  const validImages = normalizeImages(images);
+  if (!validImages.length) return rawInput;
+  const names = validImages.map((img) => `- ${img.name || 'image'} (${img.width || '?'}x${img.height || '?'})`);
+  return `${rawInput}\n\nAttached reference images:\n${names.join('\n')}`;
 }
 
 async function fetchWithBackoff({ url, key, body, port, isAborted }) {

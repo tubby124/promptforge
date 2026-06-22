@@ -47,6 +47,7 @@
         <option value="general">General</option>
         <option value="email">Email</option>
         <option value="image-gen">Image generation</option>
+        <option value="image-edit">Image edit / resize</option>
         <option value="code">Code</option>
         <option value="marketing">Marketing</option>
         <option value="research">Research</option>
@@ -70,7 +71,12 @@
 
   <section class="pf-input">
     <label for="pf-raw">Paste your rough prompt</label>
-    <textarea id="pf-raw" rows="6" placeholder="e.g. write me an email to my landlord asking for a maintenance fix"></textarea>
+    <textarea id="pf-raw" rows="6" placeholder="e.g. make this banner image cleaner, change the red to True Color blue, and resize for 4x8 ft print"></textarea>
+    <div class="pf-attachments">
+      <input id="pf-image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden />
+      <button id="pf-attach-image" class="pf-secondary pf-attach-btn" type="button">Add image</button>
+      <div id="pf-image-list" class="pf-image-list" aria-live="polite"></div>
+    </div>
     <div class="pf-tag" id="pf-detected"></div>
   </section>
 

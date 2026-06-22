@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PromptForge",
-  "version": "0.2.0",
-  "description": "Profile-aware prompt optimizer for ChatGPT, Claude, Gemini, Perplexity, Grok. Sharpen (default) or Deep (Lyra-4D) mode. Streams via OpenRouter + Claude Haiku.",
+  "version": "0.3.0",
+  "description": "Profile-aware prompt optimizer for ChatGPT, Claude, Gemini, Perplexity, Grok. Supports reference images for image-edit prompts. Streams via OpenRouter + Claude Haiku.",
   "permissions": [
     "storage",
     "activeTab",
